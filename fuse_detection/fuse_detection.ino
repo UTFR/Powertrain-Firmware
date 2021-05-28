@@ -1,5 +1,3 @@
-//Sample code for the Matrix library
-
 #include "Matrix.hpp"
 
 void setup() {
