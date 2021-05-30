@@ -94,6 +94,7 @@ bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int 
   medDev(sample, size, &median, &med_abs_dev);
   float *zscores = calcZscores(sample, size, median, med_abs_dev);
   updateMemory(memory_frame, zscores);
+  free(zscores, sizeof(float) * size);
   return detect_fuse(memory_frame, threshold);
 }
 
@@ -158,6 +159,7 @@ void medDev(float* sample, int size, float* median, float* med_abs_dev) {
   if (size % 2 == 0) *med_abs_dev = (arr[(size / 2) - 1] + arr[size / 2]) / 2;
   else *med_abs_dev = arr[size / 2];
 
+  free(arr, sizeof(float) * size);
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
