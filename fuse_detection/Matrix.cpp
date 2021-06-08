@@ -1,13 +1,14 @@
 #include "Matrix.hpp"
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "MemoryFree.h"
 // FIXME: Not commenting in this file since I believe Ege said that no dynamic memory will be used. Will
 // comment later
 Matrix::Matrix(const int &num_rows, const int &num_cols){
   failed = false;
   #ifdef ARDUINO
-  if(freeMemory() < (num_rows * sizeof(float*) + num_rows * num_cols * sizeof(float))){
+  if(freeMemory() < (num_rows * sizeof(uint16_t*) + num_rows * num_cols * sizeof(uint16_t))){
     failed = true;
     return;
   }
@@ -15,19 +16,19 @@ Matrix::Matrix(const int &num_rows, const int &num_cols){
   this->num_rows = num_rows;
   this->num_cols = num_cols;
   
-  data = malloc(num_rows * sizeof(float*));
+  data = malloc(num_rows * sizeof(uint16_t*));
   for(int i = 0; i < num_rows; i++){
-    data[i] = malloc(num_cols * sizeof(float));
+    data[i] = malloc(num_cols * sizeof(uint16_t));
     for(int j = 0; j < num_cols; j++){
       data[i][j] = 0;
     }
   }
 }
 
-Matrix::Matrix(const int &num_rows, const int &num_cols, float **data){
+Matrix::Matrix(const int &num_rows, const int &num_cols, uint16_t**data){
   failed = false;
   #ifdef ARDUINO
-  if(freeMemory() < (num_rows * sizeof(float*) + num_rows * num_cols * sizeof(float))){
+  if(freeMemory() < (num_rows * sizeof(uint16_t*) + num_rows * num_cols * sizeof(uint16_t))){
     failed = true;
     return;
   }
@@ -41,7 +42,7 @@ Matrix::Matrix(const int &num_rows, const int &num_cols, float **data){
 Matrix::Matrix(const Matrix& m){
   failed = false;
   #ifdef ARDUINO
-  if(freeMemory() < (num_rows * sizeof(float*) + num_rows * num_cols * sizeof(float))){
+  if(freeMemory() < (num_rows * sizeof(uint16_t*) + num_rows * num_cols * sizeof(uint16_t))){
     failed = true;
     return;
   }
@@ -49,9 +50,9 @@ Matrix::Matrix(const Matrix& m){
   num_rows = m.num_rows;
   num_cols = m.num_cols;
   
-  data = malloc(m.num_rows * sizeof(float*));
+  data = malloc(m.num_rows * sizeof(uint16_t*));
   for(int i = 0; i < m.num_rows; i++){
-    data[i] = malloc(m.num_cols * sizeof(float));
+    data[i] = malloc(m.num_cols * sizeof(uint16_t));
     for(int j = 0; j < m.num_cols; j++){
       data[i][j] = m.data[i][j];
     }
@@ -83,7 +84,7 @@ Matrix & Matrix::operator-(const Matrix &rhs){
   return *this;
 }
 
-Matrix & Matrix::operator*(const float &i){
+Matrix & Matrix::operator*(const uint16_t &i){
   for(int row = 0; row < num_rows; row++){
     for(int col = 0; col < num_cols; col++){
       data[row][col] *= i;
@@ -94,7 +95,7 @@ Matrix & Matrix::operator*(const float &i){
 
 Matrix & Matrix::operator*(const Matrix &rhs){
   for(int row = 0; row < num_rows; row++){
-    float this_row[num_cols];
+      uint16_t this_row[num_cols];
     for(int col = 0; col < num_cols; col++){
       for(int i = 0; i < rhs.num_rows; i++){
         this_row[i] = data[row][col] * rhs.data[row][i];
@@ -133,7 +134,7 @@ bool Matrix::operator!=(const Matrix &rhs){
   return false;
 }
 
-float & Matrix::cell(int row, int col){
+uint16_t & Matrix::cell(int row, int col){
   return data[row][col];
 }
 
