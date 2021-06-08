@@ -1,6 +1,7 @@
 #include <CAN.h>
 #include "Matrix.hpp"
 #include <stdint.h>
+#include <string.h>
 
 #define CAN_BITRATE 500E3
 #define SAMPLE_RATE_HZ 10
@@ -16,7 +17,8 @@ bool read_yet[CELL_COUNT];
 
 void setup() {
     Serial.begin(9600);
-    // FIXME: where does the setup happen for pin NOT_SHUTDOWN? */
+    pinMode(NOT_SHUTDOWN, OUTPUT);
+    digitalWrite(NOT_SHUTDOWN, HIGH);
 
     if (!CAN.begin(CAN_BITRATE)) {
         Serial.println("Starting CAN failed. Halting!");
@@ -75,9 +77,10 @@ void loop() {
         }
     }
 
-    // FIXME: Why are we passing the CELL_COUNT and Z_SCORE_THRESHOLD? Since they're #define'd, put them in a header file and
-    // include that. Then it's populated at compile time and saves some resources
-    if (fuseDetectionAlgorithm(*memory_frame, current_sample, CELL_COUNT, Z_SCORE_THRESHOLD)) {
+    //Clear read_yet
+    memset(read_yet, false, CELL_COUNT);
+
+    if (fuseDetectionAlgorithm(*memory_frame, current_sample)) {
         //If we did sense a blown fuse, shut down the traction system
         digitalWrite(NOT_SHUTDOWN, LOW);
         Serial.println("Z-score too high! Detected a blown fuse. Shutting car down NOW!");
@@ -95,14 +98,13 @@ int comp(const void* a, const void* b) {
 /*
  * Returns fuse flag
  */
- // FIXME: make parameters const if possible. Dunno if memory_frame can be but the pointer probs can
-bool fuseDetectionAlgorithm(Matrix& memory_frame, uint16_t* sample, int size, int threshold) {
+bool fuseDetectionAlgorithm(Matrix& memory_frame, uint16_t* sample) {
     uint16_t median, med_abs_dev;
-    medDev(sample, size, &median, &med_abs_dev);
-    uint16_t* zscores = calcZscores(sample, size, median, med_abs_dev);
+    medDev(sample, CELL_COUNT, &median, &med_abs_dev);
+    uint16_t* zscores = calcZscores(sample, CELL_COUNT, median, med_abs_dev);
     updateMemory(memory_frame, zscores);
-    free(zscores, sizeof(uint16_t) * size);
-    return detect_fuse(memory_frame, threshold);
+    free(zscores);
+    return detect_fuse(memory_frame);
 }
 
 /*
@@ -116,11 +118,10 @@ bool fuseDetectionAlgorithm(Matrix& memory_frame, uint16_t* sample, int size, in
  *
  * Returns: true if we think a fuse has blown
  */
- // FIXME: pass by reference
-bool detect_fuse(Matrix memory_frame, int threshold) {
+bool detect_fuse(Matrix & memory_frame) {
     for (int i = 0; i < memory_frame.rows(); i++) {
         //Measures difference between first and last values in each row, and compares to threshold
-        if (abs(memory_frame.cell(i, 0) - memory_frame.cell(i, memory_frame.rows() - 1)) > threshold) {
+        if (abs(memory_frame.cell(i, 0) - memory_frame.cell(i, memory_frame.rows() - 1)) > Z_SCORE_THRESHOLD) {
             return true;
         }
     }
@@ -130,7 +131,7 @@ bool detect_fuse(Matrix memory_frame, int threshold) {
 /*
  * Copies in the new sample and shifts the memory by one row
  */
- // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just 
+ // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just
  // adjust a pointer to the current row? This is so computationally expensive right here
 void updateMemory(Matrix& memory_frame, uint16_t* sample) {
     //Shift all the collumns by one
@@ -150,29 +151,29 @@ void updateMemory(Matrix& memory_frame, uint16_t* sample) {
 // trying to find a method that's a) faster and b) occupies less memory. But I also don't know how large
 // these arrays are, haven't read all the code yet
 void medDev(uint16_t* sample, int size, uint16_t* median, uint16_t* med_abs_dev) {
-    //  Takes input column vector (sample), calculates median and median absolute deviation. 
+    //  Takes input column vector (sample), calculates median and median absolute deviation.
 
-    // copied the array so that the original array doesn't get sorted 
+    // copied the array so that the original array doesn't get sorted
     uint16_t* arr = malloc(sizeof(uint16_t) * size);
     for (int i = 0; i < size; i++) arr[i] = sample[i];
 
-    // sort values, find median 
+    // sort values, find median
     qsort(arr, size, sizeof(uint16_t), comp);
     if (size % 2 == 0) *median = (arr[(size / 2) - 1] + arr[size / 2]) / 2;
     else *median = arr[size / 2];
 
-    // calculate med_abs_dev: subtract median from all values and find absolute value 
+    // calculate med_abs_dev: subtract median from all values and find absolute value
     for (int j = 0; j < size; j++) {
         arr[j] = arr[j] - (*median);
         if (arr[j] < 0) arr[j] = -1 * arr[j];
     }
 
-    //sort values, find median 
+    //sort values, find median
     qsort(arr, size, sizeof(uint16_t), comp);
     if (size % 2 == 0) *med_abs_dev = (arr[(size / 2) - 1] + arr[size / 2]) / 2;
     else *med_abs_dev = arr[size / 2];
 
-    free(arr, sizeof(uint16_t) * size);
+    free(arr);
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
