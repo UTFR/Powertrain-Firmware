@@ -15,12 +15,14 @@ bool read_yet[CELL_COUNT];
 
 void setup() {
   Serial.begin(9600);
+  // FIXME: where does the setup happen for pin NOT_SHUTDOWN? */
 
   if(!CAN.begin(CAN_BITRATE)){
     Serial.println("Starting CAN failed. Halting!");
     asm("BREAK");
   }
 
+  // FIXME: If you're going to use dynamic memory gotta check that it was properly allocated
   memory_frame = new Matrix(CELL_COUNT, MEMORY_FRAME_DEPTH);
   current_sample = malloc(CELL_COUNT * sizeof(float));
   for(int i = 0; i < CELL_COUNT; i++){
@@ -71,6 +73,9 @@ void loop() {
       return;
     }
   }
+
+  // FIXME: Why are we passing the CELL_COUNT and Z_SCORE_THRESHOLD? Since they're #define'd, put them in a header file and
+  // include that. Then it's populated at compile time and saves some resources
   if(fuseDetectionAlgorithm(*memory_frame, current_sample, CELL_COUNT, Z_SCORE_THRESHOLD)){
     //If we did sense a blown fuse, shut down the traction system
     digitalWrite(NOT_SHUTDOWN, LOW);
@@ -89,6 +94,7 @@ int comp(const void* a, const void* b) {
 /*
  * Returns fuse flag
  */
+ // FIXME: make parameters const if possible. Dunno if memory_frame can be but the pointer probs can
 bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int threshold){
   float median, med_abs_dev;
   medDev(sample, size, &median, &med_abs_dev);
@@ -109,6 +115,7 @@ bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int 
  * 
  * Returns: true if we think a fuse has blown
  */
+ // FIXME: pass by reference
 bool detect_fuse(Matrix memory_frame, int threshold){
   for(int i = 0; i < memory_frame.rows(); i++){
     //Measures difference between first and last values in each row, and compares to threshold
@@ -122,6 +129,8 @@ bool detect_fuse(Matrix memory_frame, int threshold){
 /*
  * Copies in the new sample and shifts the memory by one row
  */
+ // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just 
+ // adjust a pointer to the current row? This is so computationally expensive right here
 void updateMemory(Matrix & memory_frame, float * sample){
   //Shift all the collumns by one
   for(int i = memory_frame.rows() - 1; i > 0; i--){
@@ -136,6 +145,9 @@ void updateMemory(Matrix & memory_frame, float * sample){
   }
 }
 
+// FIXME: is there a way to make this less computationally expensive? If not, that's okay. But worth
+// trying to find a method that's a) faster and b) occupies less memory. But I also don't know how large
+// these arrays are, haven't read all the code yet
 void medDev(float* sample, int size, float* median, float* med_abs_dev) {
   //  Takes input column vector (sample), calculates median and median absolute deviation. 
   

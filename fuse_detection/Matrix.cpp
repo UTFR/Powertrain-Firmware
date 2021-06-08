@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "MemoryFree.h"
-
+// FIXME: Not commenting in this file since I believe Ege said that no dynamic memory will be used. Will
+// comment later
 Matrix::Matrix(const int &num_rows, const int &num_cols){
   failed = false;
   #ifdef ARDUINO
