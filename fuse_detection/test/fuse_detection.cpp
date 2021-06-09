@@ -2,6 +2,12 @@
 #include "fuse_detection.hpp"
 #include <cstdlib>
 
+#include "test_driver.hpp"
+
+float abs(float x){
+  return x > 0 ? x : -x;
+}
+
 int comp(const void* a, const void* b) {
   return ((int)(*(float*)a - *(float*)b));
 }
@@ -89,7 +95,7 @@ void medDev(float* sample, int size, float* median, float* med_abs_dev) {
   qsort(arr, size, sizeof(float), comp);
   if (size % 2 == 0) *med_abs_dev = (arr[(size / 2) - 1] + arr[size / 2]) / 2;
   else *med_abs_dev = arr[size / 2];
-  
+
   #ifdef ARDUINO
     free(arr, sizeof(float) * size);
   #else
@@ -100,6 +106,12 @@ void medDev(float* sample, int size, float* median, float* med_abs_dev) {
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
 float * calcZscores(float* sample, int size, float median, float med_abs_dev) {
   float* zscores = malloc(sizeof(float) * size); // since the number of zscores = size of sample
-  for (int i = 0; i < size; i++) zscores[i] = (sample[i] - median) / med_abs_dev;
+  if (med_abs_dev != 0)
+    for (int i = 0; i < size; i++) zscores[i] = (sample[i] - median) / med_abs_dev;
+  else
+    for (int i = 0; i < size; i++) zscores[i] = INFINITY;
+  #ifdef DEBUG
+    print(zscores, size);
+  #endif
   return zscores;
 }

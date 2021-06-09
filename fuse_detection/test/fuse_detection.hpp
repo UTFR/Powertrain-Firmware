@@ -2,6 +2,9 @@
 
 #define Z_SCORE_THRESHOLD 10 //TODO: Find a real value for this
 
+#include <limits>
+#define INFINITY std::numeric_limits<float>::max()
+
 int comp(const void* a, const void* b);
 bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int threshold);
 bool detect_fuse(Matrix memory_frame, int threshold);

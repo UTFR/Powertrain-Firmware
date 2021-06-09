@@ -1,27 +1,19 @@
 #include <iostream>
 #include <cassert>
+#include <csignal>
 #include "Matrix.hpp"
 #include "fuse_detection.hpp"
+#include "test_driver.hpp"
 
 #define EPSILON 0.0001f
 
-float sample_frame[10][10] = {
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100},
-  {100,100,100,100,100,100,100,100,100,100}
-};
 
-float sample[10] = {100,100,100,100,100,100,100,100,100,100};
+float sample_frame[0][10];
+
+float sample[10] = {101,100,100,99,98,91,105,109,103,100};
 
 int main() {
-  std::cout << "Testing fuse detection" << std::endl;
+  std::cout << "Testing fuse detection with empty memory frame." << std::endl;
   Matrix memory_frame(10,10);
 
   for (size_t i = 0; i < 10; i++) {
@@ -30,15 +22,16 @@ int main() {
     }
   }
 
-  std::cout << "Passing array of all 100's and sample of all 100's. Should return false." << std::endl;
   assert(!fuseDetectionAlgorithm(memory_frame, sample, 10, Z_SCORE_THRESHOLD));
   std::cout << "Passed." << std::endl;
 
 
-  float decrease_by = 100;
+  float decrease_by = 10;
   std::cout << "Now decreasing one cell by " << decrease_by << " until detection trips." << std::endl;
   for (size_t i = 0; i < 100/decrease_by; i++) {
+    // std::raise(SIGINT);
     sample[0]-=decrease_by;
+    print(sample, 10);
     bool ret = fuseDetectionAlgorithm(memory_frame, sample, 10, Z_SCORE_THRESHOLD);
     std::cout << "Cell is at " << sample[0] << ". ";
     if (ret) {
@@ -55,11 +48,20 @@ int main() {
   return 0;
 }
 
-void print(float **matrix){
-    int i, j;
-    for (i = 0; i < 10; ++i){
-        for (j = 0; j < 10; ++j)
+void print(float **matrix, int row, int col){
+  int i, j;
+    for (i = 0; i < row; ++i){
+        for (j = 0; j < col; ++j)
             std::cout << matrix[i][j] << " ";
           std::cout << std::endl;
     }
+}
+
+void print(float *arr, int len){
+  std::cout << "[";
+  int i;
+  for (i = 0; i < len - 1; ++i){
+    std::cout << arr[i] << ", ";
+  }
+  std::cout << arr[i] << "]" << std::endl;
 }
