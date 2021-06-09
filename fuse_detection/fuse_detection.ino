@@ -8,6 +8,8 @@
 #define Z_SCORE_THRESHOLD 10 //TODO: Find a real value for this
 #define NOT_SHUTDOWN 13 //The pin that connects to the tractive system shutdown circuit. Normally high, low if we want to force a shutdown
 
+#define INFINITY 3.4028235e+38
+
 Matrix *memory_frame;
 float *current_sample;
 
@@ -48,7 +50,7 @@ void loop() {
     for(int i = 0; i < 8; i++){
       packet[i] = CAN.read();
     }
-    
+
     //Verify packet integrity
     int checksum = packet[0] + 8 + packet[0] + packet[1] + packet[2] + packet[3] + packet[4] + packet[5] + packet[6];
     checksum &= 0xFF00;
@@ -60,7 +62,7 @@ void loop() {
       Serial.println(". Throwing packet away.");
       return;
     }
-    
+
     //Save sample
     current_sample[packet[0]] = packet[2] | (packet[1] << 8);
     //Remember we did that
@@ -100,7 +102,7 @@ bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int 
   medDev(sample, size, &median, &med_abs_dev);
   float *zscores = calcZscores(sample, size, median, med_abs_dev);
   updateMemory(memory_frame, zscores);
-  free(zscores, sizeof(float) * size);
+  free(zscores);
   return detect_fuse(memory_frame, threshold);
 }
 
@@ -108,11 +110,11 @@ bool fuseDetectionAlgorithm(Matrix & memory_frame, float* sample, int size, int 
  * Takes a memory frame input, with n most recent
  * Z-Score measurements for each parallel cell brick. Each parallel cell
  * brick is checked to see if a fuse has blown.
- * 
+ *
  * Parameters:
  * memoryframe: Array of z-scores. Each column corresponds to a sample from a given time step. Each row corresponds to a parallel cell brick.
  * threshold: A constant integer. If the difference in z-score from the beginning of the memory frame to the end exceeds this value, then a fuse has blown.
- * 
+ *
  * Returns: true if we think a fuse has blown
  */
  // FIXME: pass by reference
@@ -129,7 +131,7 @@ bool detect_fuse(Matrix memory_frame, int threshold){
 /*
  * Copies in the new sample and shifts the memory by one row
  */
- // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just 
+ // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just
  // adjust a pointer to the current row? This is so computationally expensive right here
 void updateMemory(Matrix & memory_frame, float * sample){
   //Shift all the collumns by one
@@ -149,34 +151,37 @@ void updateMemory(Matrix & memory_frame, float * sample){
 // trying to find a method that's a) faster and b) occupies less memory. But I also don't know how large
 // these arrays are, haven't read all the code yet
 void medDev(float* sample, int size, float* median, float* med_abs_dev) {
-  //  Takes input column vector (sample), calculates median and median absolute deviation. 
-  
-  // copied the array so that the original array doesn't get sorted 
-  float* arr = malloc(sizeof(float) * size); 
+  //  Takes input column vector (sample), calculates median and median absolute deviation.
+
+  // copied the array so that the original array doesn't get sorted
+  float* arr = malloc(sizeof(float) * size);
   for (int i = 0; i < size; i++) arr[i] = sample[i];
 
-  // sort values, find median 
+  // sort values, find median
   qsort(arr, size, sizeof(float), comp);
   if (size % 2 == 0) *median = (arr[(size / 2) - 1] + arr[size/ 2]) / 2;
   else *median = arr[size / 2];
 
-  // calculate med_abs_dev: subtract median from all values and find absolute value 
+  // calculate med_abs_dev: subtract median from all values and find absolute value
   for (int j = 0; j < size; j++) {
     arr[j] = arr[j] - (*median);
-    if (arr[j] < 0) arr[j] = -1 * arr[j]; 
+    if (arr[j] < 0) arr[j] = -1 * arr[j];
   }
-  
-  //sort values, find median 
+
+  //sort values, find median
   qsort(arr, size, sizeof(float), comp);
   if (size % 2 == 0) *med_abs_dev = (arr[(size / 2) - 1] + arr[size / 2]) / 2;
   else *med_abs_dev = arr[size / 2];
 
-  free(arr, sizeof(float) * size);
+  free(arr);
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
 float * calcZscores(float* sample, int size, float median, float med_abs_dev) {
   float* zscores = malloc(sizeof(float) * size); // since the number of zscores = size of sample
-  for (int i = 0; i < size; i++) zscores[i] = (sample[i] - median) / med_abs_dev; 
-  return zscores; 
+  if (med_abs_dev != 0)
+    for (int i = 0; i < size; i++) zscores[i] = (sample[i] - median) / med_abs_dev;
+  else
+    for (int i = 0; i < size; i++) zscores[i] = INFINITY;
+  return zscores;
 }
