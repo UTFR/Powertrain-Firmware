@@ -10,7 +10,7 @@
 #define Z_SCORE_THRESHOLD 10 //TODO: Find a real value for this
 #define NOT_SHUTDOWN 13 //The pin that connects to the tractive system shutdown circuit. Normally high, low if we want to force a shutdown
 
-Matrix* memory_frame;
+uint16_t** memory_frame;
 uint16_t* current_sample;
 
 bool read_yet[CELL_COUNT];
@@ -25,8 +25,21 @@ void setup() {
         asm("BREAK");
     }
 
-    // FIXME: If you're going to use dynamic memory gotta check that it was properly allocated
-    memory_frame = new Matrix(CELL_COUNT, MEMORY_FRAME_DEPTH);
+    memory_frame = malloc(CELL_COUNT * sizeof(uint16_t*));
+    if (memory_frame == nullptr) {
+        Serial.println("Can't allocate space for the memory frame rows. Halting!");
+        asm("BREAK");
+    }
+    for (int i = 0; i < CELL_COUNT; i++) {
+        memory_frame[i] = malloc(MEMORY_FRAME_DEPTH * sizeof(uint16_t));
+        if (memory_frame[i] == nullptr) {
+            Serial.print("Can't allocate space for the memory frame cols (col index");
+            Serial.print(i);
+            Serial.println("). Halting!");
+            asm("BREAK");
+        }
+    }
+
     current_sample = malloc(CELL_COUNT * sizeof(uint16_t));
     for (int i = 0; i < CELL_COUNT; i++) {
         current_sample[i] = -1;
@@ -98,7 +111,7 @@ int comp(const void* a, const void* b) {
 /*
  * Returns fuse flag
  */
-bool fuseDetectionAlgorithm(Matrix& memory_frame, uint16_t* sample) {
+bool fuseDetectionAlgorithm(uint16_t** memory_frame, uint16_t* sample) {
     uint16_t median, med_abs_dev;
     medDev(sample, CELL_COUNT, &median, &med_abs_dev);
     uint16_t* zscores = calcZscores(sample, CELL_COUNT, median, med_abs_dev);
