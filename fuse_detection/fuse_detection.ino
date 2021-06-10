@@ -143,6 +143,11 @@ bool detect_fuse(uint16_t **memory_frame){
  */
  // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just
  // adjust a pointer to the current row? This is so computationally expensive right here
+ //
+ // Will do this once I get external memory working -I don't want to step on malloc's toes.
+ // I'll put the memory frame on external memory, then have it read circularly until it
+ // reaches the end pointer. This function would move both pointers up by 1 and write the
+ // new sample into where the old begin pointer pointed. -Ege
 void updateMemory(uint16_t **memory_frame, uint16_t *sample){
   //Shift all the collumns by one
   for(int i = CELL_COUNT - 1; i > 0; i--){
