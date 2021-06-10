@@ -171,6 +171,9 @@ void updateMemory(uint16_t **memory_frame, uint16_t *sample){
 // FIXME: is there a way to make this less computationally expensive? If not, that's okay. But worth
 // trying to find a method that's a) faster and b) occupies less memory. But I also don't know how large
 // these arrays are, haven't read all the code yet
+//
+// This only uses 2N (260 bytes) of heap space so I don't think we can shrink it any farther. I wasn't
+// able to find a faster algorithm that doesn't do estimations, lmk if you can find anything -Ege
 void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
   //  Takes input column vector (sample), calculates median and median absolute deviation.
 
