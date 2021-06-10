@@ -1,4 +1,5 @@
 #include <CAN.h>
+#include <avr/wdt.h>
 
 #define CAN_BITRATE 500E3
 #define SAMPLE_RATE_HZ 10
@@ -6,6 +7,7 @@
 #define MEMORY_FRAME_DEPTH 20
 #define Z_SCORE_THRESHOLD 10 //TODO: Find a real value for this
 #define NOT_SHUTDOWN 13 //The pin that connects to the tractive system shutdown circuit. Normally high, low if we want to force a shutdown
+#define WDT_PERIOD WDTO_500MS
 
 #define INFINITY 65535
 
@@ -18,7 +20,6 @@ bool read_yet[CELL_COUNT];
 void setup() {
   Serial.begin(9600);
   pinMode(NOT_SHUTDOWN, OUTPUT);
-  digitalWrite(NOT_SHUTDOWN, HIGH);
   if(!CAN.begin(CAN_BITRATE)){
     Serial.println("Starting CAN failed. Halting!");
     asm("BREAK");
@@ -44,6 +45,13 @@ void setup() {
   for(int i = 0; i < CELL_COUNT; i++){
     current_sample[i] = -1;
   }
+
+  //Enable the watchdog timer
+  wdt_enable(WDT_PERIOD);
+  WDTCSR |= 0b000111000;
+  WDTCSR = 01000000 | WDT_PERIOD;
+  wdt_reset();
+  digitalWrite(NOT_SHUTDOWN, HIGH);
 }
 
 void loop() {
@@ -89,6 +97,9 @@ void loop() {
       return;
     }
   }
+
+  //Feed the watchdog timer
+  wdt_reset();
 
   if(fuseDetectionAlgorithm(memory_frame, current_sample)){
     //If we did sense a blown fuse, shut down the traction system
@@ -212,4 +223,10 @@ uint16_t * calcZscores(uint16_t* sample, uint16_t median, uint16_t med_abs_dev) 
   else
     for (int i = 0; i < CELL_COUNT; i++) zscores[i] = INFINITY;
   return zscores;
+}
+
+ISR(WDT_vect){
+  digitalWrite(NOT_SHUTDOWN, LOW);
+  Serial.println("Watchdog not fed. Shutting car down NOW!");
+  while(1);
 }
