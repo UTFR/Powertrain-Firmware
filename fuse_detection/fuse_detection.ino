@@ -25,10 +25,22 @@ void setup() {
   }
 
   memory_frame = malloc(CELL_COUNT * sizeof(uint16_t *));
+  if (memory_frame == nullptr) {
+      Serial.println("Memory allocation failed. Halting!");
+      asm("BREAK");
+  }
   for (size_t i = 0; i < CELL_COUNT; i++) {
     memory_frame[i] = malloc(MEMORY_FRAME_DEPTH * sizeof(uint16_t));
+    if (memory_frame[i] == nullptr) {
+        Serial.println("Memory allocation failed. Halting!");
+        asm("BREAK");
+    }
   }
   current_sample = malloc(CELL_COUNT * sizeof(uint16_t));
+  if (current_sample == nullptr) {
+      Serial.println("Memory allocation failed. Halting!");
+      asm("BREAK");
+  }
   for(int i = 0; i < CELL_COUNT; i++){
     current_sample[i] = -1;
   }
@@ -159,6 +171,10 @@ void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
 
   // copied the array so that the original array doesn't get sorted
   float* arr = malloc(sizeof(uint16_t) * CELL_COUNT);
+  if (arr == nullptr) {
+      Serial.println("Memory allocation failed. Halting!");
+      asm("BREAK");
+  }
   for (int i = 0; i < CELL_COUNT; i++) arr[i] = sample[i];
 
   // sort values, find median
