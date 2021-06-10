@@ -1,5 +1,4 @@
 #include <CAN.h>
-#include "Matrix.hpp"
 
 #define CAN_BITRATE 500E3
 #define SAMPLE_RATE_HZ 10
@@ -8,10 +7,11 @@
 #define Z_SCORE_THRESHOLD 10 //TODO: Find a real value for this
 #define NOT_SHUTDOWN 13 //The pin that connects to the tractive system shutdown circuit. Normally high, low if we want to force a shutdown
 
-#define INFINITY 3.4028235e+38
+#define INFINITY 65535
 
-Matrix *memory_frame;
-float *current_sample;
+size_t valid_rows = 0; //Number of initialised rows in the memory frame
+uint16_t **memory_frame;
+uint16_t *current_sample;
 
 bool read_yet[CELL_COUNT];
 
@@ -24,9 +24,11 @@ void setup() {
     asm("BREAK");
   }
 
-  // FIXME: If you're going to use dynamic memory gotta check that it was properly allocated
-  memory_frame = new Matrix(CELL_COUNT, MEMORY_FRAME_DEPTH);
-  current_sample = malloc(CELL_COUNT * sizeof(float));
+  memory_frame = malloc(CELL_COUNT * sizeof(uint16_t *));
+  for (size_t i = 0; i < CELL_COUNT; i++) {
+    memory_frame[i] = malloc(MEMORY_FRAME_DEPTH * sizeof(uint16_t));
+  }
+  current_sample = malloc(CELL_COUNT * sizeof(uint16_t));
   for(int i = 0; i < CELL_COUNT; i++){
     current_sample[i] = -1;
   }
@@ -76,7 +78,7 @@ void loop() {
     }
   }
 
-  if(fuseDetectionAlgorithm(*memory_frame, current_sample)){
+  if(fuseDetectionAlgorithm(memory_frame, current_sample)){
     //If we did sense a blown fuse, shut down the traction system
     digitalWrite(NOT_SHUTDOWN, LOW);
     Serial.println("Z-score too high! Detected a blown fuse. Shutting car down NOW!");
@@ -88,16 +90,16 @@ void loop() {
 
 
 int comp(const void* a, const void* b) {
-  return ((int)(*(float*)a - *(float*)b));
+  return ((int)(*(uint16_t*)a - *(uint16_t*)b));
 }
 
 /*
  * Returns fuse flag
  */
-bool fuseDetectionAlgorithm(Matrix & memory_frame, const float *sample){
-  float median, med_abs_dev;
+bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
+  uint16_t median, med_abs_dev;
   medDev(sample, &median, &med_abs_dev);
-  float *zscores = calcZscores(sample, median, med_abs_dev);
+  uint16_t *zscores = calcZscores(sample, median, med_abs_dev);
   updateMemory(memory_frame, zscores);
   free(zscores);
   return detect_fuse(memory_frame);
@@ -114,10 +116,10 @@ bool fuseDetectionAlgorithm(Matrix & memory_frame, const float *sample){
  *
  * Returns: true if we think a fuse has blown
  */
-bool detect_fuse(Matrix & memory_frame){
-  for(int i = 0; i < memory_frame.rows(); i++){
+bool detect_fuse(uint16_t **memory_frame){
+  for(int i = 0; i < CELL_COUNT; i++){
     //Measures difference between first and last values in each row, and compares to threshold
-    if(abs(memory_frame.cell(i,0) - memory_frame.cell(i,memory_frame.rows() - 1)) > Z_SCORE_THRESHOLD){
+    if(abs(memory_frame[i][0] - memory_frame[i][CELL_COUNT - 1]) > Z_SCORE_THRESHOLD){
       return true;
     }
   }
@@ -129,32 +131,38 @@ bool detect_fuse(Matrix & memory_frame){
  */
  // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just
  // adjust a pointer to the current row? This is so computationally expensive right here
-void updateMemory(Matrix & memory_frame, float * sample){
+void updateMemory(uint16_t **memory_frame, uint16_t *sample){
   //Shift all the collumns by one
-  for(int i = memory_frame.rows() - 1; i > 0; i--){
-    for(int j = 0; j < memory_frame.cols(); j++){
-      memory_frame.cell(j, i) = memory_frame.cell(j, i-1);
+  for(int i = CELL_COUNT - 1; i > 0; i--){
+    if (i == valid_rows) {
+      break;
+    }
+    for(int j = 0; j < CELL_COUNT; j++){
+      memory_frame[j][i] = memory_frame[j][i-1];
     }
   }
 
   //Copy in the sample
-  for(int i = 0; i < memory_frame.cols(); i++){
-    memory_frame.cell(i, 0) = sample[i];
+  for(int i = 0; i < MEMORY_FRAME_DEPTH; i++){
+    memory_frame[i][0] = sample[i];
+  }
+  if (valid_rows < CELL_COUNT) {
+    valid_rows++;
   }
 }
 
 // FIXME: is there a way to make this less computationally expensive? If not, that's okay. But worth
 // trying to find a method that's a) faster and b) occupies less memory. But I also don't know how large
 // these arrays are, haven't read all the code yet
-void medDev(float* sample, float* median, float* med_abs_dev) {
+void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
   //  Takes input column vector (sample), calculates median and median absolute deviation.
 
   // copied the array so that the original array doesn't get sorted
-  float* arr = malloc(sizeof(float) * CELL_COUNT);
+  float* arr = malloc(sizeof(uint16_t) * CELL_COUNT);
   for (int i = 0; i < CELL_COUNT; i++) arr[i] = sample[i];
 
   // sort values, find median
-  qsort(arr, CELL_COUNT, sizeof(float), comp);
+  qsort(arr, CELL_COUNT, sizeof(uint16_t), comp);
   if (CELL_COUNT % 2 == 0) *median = (arr[(CELL_COUNT / 2) - 1] + arr[CELL_COUNT/ 2]) / 2;
   else *median = arr[CELL_COUNT / 2];
 
@@ -165,7 +173,7 @@ void medDev(float* sample, float* median, float* med_abs_dev) {
   }
 
   //sort values, find median
-  qsort(arr, CELL_COUNT, sizeof(float), comp);
+  qsort(arr, CELL_COUNT, sizeof(uint16_t), comp);
   if (CELL_COUNT % 2 == 0) *med_abs_dev = (arr[(CELL_COUNT / 2) - 1] + arr[CELL_COUNT / 2]) / 2;
   else *med_abs_dev = arr[CELL_COUNT / 2];
 
@@ -173,8 +181,8 @@ void medDev(float* sample, float* median, float* med_abs_dev) {
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
-float * calcZscores(float* sample, float median, float med_abs_dev) {
-  float* zscores = malloc(sizeof(float) * CELL_COUNT); // since the number of zscores = size of sample
+uint16_t * calcZscores(uint16_t* sample, uint16_t median, uint16_t med_abs_dev) {
+  uint16_t* zscores = malloc(sizeof(uint16_t) * CELL_COUNT); // since the number of zscores = size of sample
   if (med_abs_dev != 0)
     for (int i = 0; i < CELL_COUNT; i++) zscores[i] = (sample[i] - median) / med_abs_dev;
   else
