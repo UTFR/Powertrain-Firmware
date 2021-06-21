@@ -1,6 +1,5 @@
 #include <CAN.h>
 #include <avr/wdt.h>
-#include <cstring>
 
 #define CAN_BITRATE 500E3
 #define SAMPLE_RATE_HZ 10
