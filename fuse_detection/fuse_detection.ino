@@ -15,6 +15,7 @@
 size_t valid_rows = 0; //Number of initialised rows in the memory frame
 uint16_t memory_frame[CELL_COUNT][MEMORY_FRAME_DEPTH];
 uint16_t current_sample[CELL_COUNT];
+uint16_t zscores[CELL_COUNT];
 
 bool read_yet[CELL_COUNT];
 
@@ -26,8 +27,9 @@ void setup() {
     asm("BREAK");
   }
 
-  //Initialise the current sample to a known (and very large) value
+  //Initialise the current sample and z scores array to a known (and very large) value
   memset(current_sample, -1, CELL_COUNT);
+  memset(zscores, -1, CELL_COUNT);
 
   //Enable the watchdog timer
   wdt_enable(WDT_PERIOD);
@@ -105,9 +107,8 @@ int comp(const void* a, const void* b) {
 bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
   uint16_t median, med_abs_dev;
   medDev(sample, &median, &med_abs_dev);
-  uint16_t *zscores = calcZscores(sample, median, med_abs_dev);
+  uint16_t *zscores = calcZscores(sample, median, med_abs_dev, zscores);
   updateMemory(memory_frame, zscores);
-  free(zscores);
   return detect_fuse(memory_frame);
 }
 
@@ -199,13 +200,11 @@ void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
-uint16_t * calcZscores(uint16_t* sample, uint16_t median, uint16_t med_abs_dev) {
-  uint16_t* zscores = malloc(sizeof(uint16_t) * CELL_COUNT); // since the number of zscores = size of sample
+void calcZscores(uint16_t* sample, uint16_t median, uint16_t med_abs_dev, uint16_t *zscores) {
   if (med_abs_dev != 0)
     for (int i = 0; i < CELL_COUNT; i++) zscores[i] = (sample[i] - median) / med_abs_dev;
   else
     for (int i = 0; i < CELL_COUNT; i++) zscores[i] = INFINITY;
-  return zscores;
 }
 
 ISR(WDT_vect){
