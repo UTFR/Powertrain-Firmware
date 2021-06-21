@@ -12,8 +12,11 @@
 
 #define INFINITY 65535
 
-size_t valid_cols = 0; //Number of initialised collumns in the memory frame
+size_t valid_rows = 0; //Number of initialised rows in the memory frame
 uint16_t memory_frame[MEMORY_FRAME_DEPTH][CELL_COUNT];
+uint16_t *memory_frame_base = (uint16_t*) memory_frame; //Base pointer for the memory frame
+uint16_t *memory_frame_start = memory_frame_base; //Current first element of the memory frame
+
 uint16_t current_sample[CELL_COUNT];
 uint16_t zscores[CELL_COUNT];
 
@@ -124,42 +127,38 @@ bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
  * Returns: true if we think a fuse has blown
  */
 bool detect_fuse(uint16_t **memory_frame){
-  for(int i = 0; i < CELL_COUNT; i++){
-    //Measures difference between first and last values in each collumn, and compares to threshold
-    if(abs(memory_frame[0][i] - memory_frame[CELL_COUNT - 1][i]) > Z_SCORE_THRESHOLD){
+
+  uint16_t *ptr = nullptr;
+  uint16_t *next_ptr = memory_frame_start;
+  #if MEMORY_FRAME_DEPTH > 1
+    #error do while will break for an array shorter than two-tall
+  #endif
+  
+  do{
+    ptr = next_ptr;
+    //Measures difference between first and last values in each row, and compares to threshold
+    if(abs(*ptr - *(ptr + (CELL_COUNT - 1))) > Z_SCORE_THRESHOLD){
       return true;
     }
-  }
+    next_ptr = (ptr - memory_frame_base + CELL_COUNT) % (CELL_COUNT * MEMORY_FRAME_DEPTH) + memory_frame_base;
+  }while(next_ptr != memory_frame_start);
   return false;
 }
 
 /*
- * Copies in the new sample and shifts the memory by one collumn
+ * Adds newest sample to the memory frame, dropping the oldest one
  */
- // FIXME: we're talking about shifting nearly ALL the on-chip memory here. Why not just
- // adjust a pointer to the current ~row~ [collumn]? This is so computationally expensive right here
- //
- // Will do this once I get external memory working -I don't want to step on malloc's toes.
- // I'll put the memory frame on external memory, then have it read circularly until it
- // reaches the end pointer. This function would move both pointers up by 1 and write the
- // new sample into where the old begin pointer pointed. -Ege
 void updateMemory(uint16_t **memory_frame, uint16_t *sample){
-  //Shift all the rows by one
-  for(int i = CELL_COUNT - 1; i > 0; i--){
-    if (i == valid_cols) {
-      break;
-    }
-    for(int j = 0; j < CELL_COUNT; j++){
-      memory_frame[i][j] = memory_frame[i-1][j];
-    }
-  }
+  // Calculate new start position
+  int offset = (memory_frame_start - memory_frame_base - CELL_COUNT) % (CELL_COUNT * MEMORY_FRAME_DEPTH);
+  if(offset < 0) offset = sizeof(memory_frame)/sizeof(uint16_t) + offset; // Add since offset is negative
+  memory_frame_start = memory_frame_base + offset;
+  // Copy new row, overwriting oldest row
+  memcpy(memory_frame_start, sample, CELL_COUNT * sizeof(uint16_t));
 
-  //Copy in the sample
-  for(int i = 0; i < MEMORY_FRAME_DEPTH; i++){
-    memory_frame[0][i] = sample[i];
-  }
-  if (valid_cols < CELL_COUNT) {
-    valid_cols++;
+  // Increment valid rows
+  if (valid_rows < CELL_COUNT) {
+    valid_rows++;
   }
 }
 
