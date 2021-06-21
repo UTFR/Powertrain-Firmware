@@ -1,5 +1,6 @@
 #include <CAN.h>
 #include <avr/wdt.h>
+#include <cstring>
 
 #define CAN_BITRATE 500E3
 #define SAMPLE_RATE_HZ 10
@@ -12,8 +13,8 @@
 #define INFINITY 65535
 
 size_t valid_rows = 0; //Number of initialised rows in the memory frame
-uint16_t **memory_frame;
-uint16_t *current_sample;
+uint16_t memory_frame[CELL_COUNT][MEMORY_FRAME_DEPTH];
+uint16_t current_sample[CELL_COUNT];
 
 bool read_yet[CELL_COUNT];
 
@@ -25,26 +26,8 @@ void setup() {
     asm("BREAK");
   }
 
-  memory_frame = malloc(CELL_COUNT * sizeof(uint16_t *));
-  if (memory_frame == nullptr) {
-      Serial.println("Memory allocation failed. Halting!");
-      asm("BREAK");
-  }
-  for (size_t i = 0; i < CELL_COUNT; i++) {
-    memory_frame[i] = malloc(MEMORY_FRAME_DEPTH * sizeof(uint16_t));
-    if (memory_frame[i] == nullptr) {
-        Serial.println("Memory allocation failed. Halting!");
-        asm("BREAK");
-    }
-  }
-  current_sample = malloc(CELL_COUNT * sizeof(uint16_t));
-  if (current_sample == nullptr) {
-      Serial.println("Memory allocation failed. Halting!");
-      asm("BREAK");
-  }
-  for(int i = 0; i < CELL_COUNT; i++){
-    current_sample[i] = -1;
-  }
+  //Initialise the current sample to a known (and very large) value
+  memset(current_sample, -1, CELL_COUNT);
 
   //Enable the watchdog timer
   wdt_enable(WDT_PERIOD);
