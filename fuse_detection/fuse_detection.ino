@@ -110,7 +110,7 @@ int comp(const void* a, const void* b) {
 bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
   uint16_t median, med_abs_dev;
   medDev(sample, &median, &med_abs_dev);
-  uint16_t *zscores = calcZscores(sample, median, med_abs_dev, zscores);
+  calcZscores(sample, median, med_abs_dev, zscores);
   updateMemory(memory_frame, zscores);
   return detect_fuse(memory_frame);
 }
