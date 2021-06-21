@@ -32,7 +32,7 @@ void setup() {
   //Enable the watchdog timer
   wdt_enable(WDT_PERIOD);
   WDTCSR |= 0b000111000;
-  WDTCSR = 01000000 | WDT_PERIOD;
+  WDTCSR = 0b01000000 | WDT_PERIOD;
   wdt_reset();
   digitalWrite(NOT_SHUTDOWN, HIGH);
 }
