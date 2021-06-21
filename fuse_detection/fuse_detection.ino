@@ -89,7 +89,7 @@ void loop() {
   //Feed the watchdog timer
   wdt_reset();
 
-  if(fuseDetectionAlgorithm(memory_frame, current_sample)){
+  if(fuseDetectionAlgorithm()){
     //If we did sense a blown fuse, shut down the traction system
     digitalWrite(NOT_SHUTDOWN, LOW);
     Serial.println("Z-score too high! Detected a blown fuse. Shutting car down NOW!");
@@ -107,12 +107,12 @@ int comp(const void* a, const void* b) {
 /*
  * Returns fuse flag
  */
-bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
+bool fuseDetectionAlgorithm(){
   uint16_t median, med_abs_dev;
-  medDev(sample, &median, &med_abs_dev);
-  calcZscores(sample, median, med_abs_dev, zscores);
-  updateMemory(memory_frame, zscores);
-  return detect_fuse(memory_frame);
+  medDev(current_sample, &median, &med_abs_dev);
+  calcZscores(current_sample, median, med_abs_dev, zscores);
+  updateMemory();
+  return detect_fuse();
 }
 
 /*
@@ -126,7 +126,7 @@ bool fuseDetectionAlgorithm(uint16_t **memory_frame, const uint16_t *sample){
  *
  * Returns: true if we think a fuse has blown
  */
-bool detect_fuse(uint16_t **memory_frame){
+bool detect_fuse(){
 
   uint16_t *ptr = nullptr;
   uint16_t *next_ptr = memory_frame_start;
@@ -148,13 +148,13 @@ bool detect_fuse(uint16_t **memory_frame){
 /*
  * Adds newest sample to the memory frame, dropping the oldest one
  */
-void updateMemory(uint16_t **memory_frame, uint16_t *sample){
+void updateMemory(){
   // Calculate new start position
   int offset = (memory_frame_start - memory_frame_base - CELL_COUNT) % (CELL_COUNT * MEMORY_FRAME_DEPTH);
   if(offset < 0) offset = sizeof(memory_frame)/sizeof(uint16_t) + offset; // Add since offset is negative
   memory_frame_start = memory_frame_base + offset;
   // Copy new row, overwriting oldest row
-  memcpy(memory_frame_start, sample, CELL_COUNT * sizeof(uint16_t));
+  memcpy(memory_frame_start, current_sample, CELL_COUNT * sizeof(uint16_t));
 
   // Increment valid rows
   if (valid_rows < CELL_COUNT) {
