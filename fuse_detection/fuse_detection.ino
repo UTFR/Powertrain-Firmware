@@ -130,7 +130,7 @@ bool detect_fuse(uint16_t **memory_frame){
 
   uint16_t *ptr = nullptr;
   uint16_t *next_ptr = memory_frame_start;
-  #if MEMORY_FRAME_DEPTH > 1
+  #if MEMORY_FRAME_DEPTH < 1
     #error do while will break for an array shorter than two-tall
   #endif
   
