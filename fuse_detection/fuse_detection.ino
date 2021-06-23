@@ -171,7 +171,7 @@ void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
   //  Takes input column vector (sample), calculates median and median absolute deviation.
 
   // copied the array so that the original array doesn't get sorted
-  float* arr = malloc(sizeof(uint16_t) * CELL_COUNT);
+  float arr[CELL_COUNT];
   if (arr == nullptr) {
       Serial.println("Memory allocation failed. Halting!");
       asm("BREAK");
@@ -193,8 +193,6 @@ void medDev(uint16_t* sample, uint16_t* median, uint16_t* med_abs_dev) {
   qsort(arr, CELL_COUNT, sizeof(uint16_t), comp);
   if (CELL_COUNT % 2 == 0) *med_abs_dev = (arr[(CELL_COUNT / 2) - 1] + arr[CELL_COUNT / 2]) / 2;
   else *med_abs_dev = arr[CELL_COUNT / 2];
-
-  free(arr);
 }
 
 // Every element of z-scores array = (Element of sample array - median)/Med_abs_dev
