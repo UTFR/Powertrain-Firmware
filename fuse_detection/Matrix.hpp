@@ -7,13 +7,13 @@
 
 class Matrix {
 private:
-  uint16_t**data;
+  float **data;
   int num_rows, num_cols;
   bool failed;
 public:
   //Constructors
   Matrix(const int &num_rows, const int &num_cols);
-  Matrix(const int &num_rows, const int &num_cols, uint16_t**data);
+  Matrix(const int &num_rows, const int &num_cols, float **data);
   Matrix(const Matrix& m);
   //Destructor
   virtual ~Matrix();
@@ -22,14 +22,14 @@ public:
   Matrix & operator+(const Matrix &rhs);
   Matrix & operator-(const Matrix &rhs);
   Matrix & operator*(const Matrix &rhs);
-  Matrix & operator*(const uint16_t &i);
+  Matrix & operator*(const float &i);
   Matrix & operator=(const Matrix &rhs);
 
   bool operator==(const Matrix &rhs);
   bool operator!=(const Matrix &rhs);
 
   //Get reference to cell
-  uint16_t & cell(int row, int col);
+  float & cell(int row, int col);
 
   //Get number of rows and collumns
   int rows();
