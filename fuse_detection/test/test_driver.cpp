@@ -7,6 +7,19 @@
 
 #define EPSILON 0.0001f
 
+/* Testing stuff
+6 cells in parallel, each with 50mOhm resistance
+Current through all cells --> 40-200
+V = IR_total
+R_initial = (6/50)-1
+R_final = (5/50)-1
+
+git status --> what you've changed
+git add --all
+git commit -m "whatever"
+git push
+
+*/
 
 float sample_frame[0][10];
 
