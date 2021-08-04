@@ -1,0 +1,91 @@
+
+
+
+
+pinMode(pinID, mode);
+
+
+
+// If we're using pins 9, 10, 11
+
+#define ENABLE_PIN 9
+
+pinMode(ENABLE_PIN, INPUT);
+pinMode(10, OUTPUT);
+
+// GPIO pin driver
+
+// We need:
+1. Name (i.e. ENABLE_PIN)
+2. Pin ID (i.e. 9)
+3. If the pin is an output, we need the init state (i.e. 0 or 5 volt init) // gpioOutput(pinName, state)
+4. Direction (i.e. input or output)
+
+// 3 imaginary pins
+1. 
+PLACEHOLDER_1, 2, 3
+
+
+typedef struct
+{
+    uint8_t pinIdx;
+    sdfsdf direction;
+
+} pinConfig;
+
+typedef enum
+{
+    ENABLE_PIN, //0
+    PLACEHOLDER_2, //1
+    PLACEHGOLDER_1, //2
+
+} pinName
+
+pinConfig all_pins[] = 
+{
+    [ENABLE_PIN] = 
+    {
+        .pinIdx = 10,
+        .direction = OUTPUT,
+    },
+    [NAME] = 
+    {
+        .pinIdx = ...
+        .direction = ...
+    },
+    {
+        .pinIdx = ...
+        .direction = ...
+    },
+    {
+        .pinIdx = ...
+        .direction = ...
+    }
+}
+
+// BAD
+main()
+{
+
+    pinMode(ENABLE_PIN, INPUT);
+    pinMode(10, OUTPUT);
+    pinMode(ENABLE_PIN, INPUT);
+    pinMode(10, OUTPUT);
+
+
+
+}
+
+// GOOD
+main()
+{
+    for (int 1=0; i.....)
+    {
+        pinMode(all_pins[i], all_pins[i].direction);
+    }
+}
+
+//==========================================================
+
+.json file
+
