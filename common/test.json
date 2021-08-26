@@ -1,0 +1,30 @@
+[
+    {
+        "name": "HW_PIN_PLACEHOLDER_1",
+        "pinID": 9,
+        "pinDirection": "INPUT"
+    },
+    {
+        "name": "HW_PIN_PLACEHOLDER_2",
+        "pinID": 10,
+        "pinDirection": "OUTPUT",
+        "initState": "HIGH"
+    },
+    {
+        "name": "HW_PIN_PLACEHOLDER_3",
+        "pinID": 11,
+        "pinDirection": "INPUT"
+    },
+    {
+        "name": "HW_PIN_PLACEHOLDER_4",
+        "pinID": 37,
+        "pinDirection": "OUTPUT",
+        "initState": "LOW"
+    },
+    {
+        "name": "HW_PIN_PLACEHOLDER_5",
+        "pinID": 25,
+        "pinDirection": "OUTPUT",
+        "initState": "HIGH"
+    }
+]
