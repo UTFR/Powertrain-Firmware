@@ -1,61 +1,22 @@
+from pinDriver_formatting import includesHeader
+from pinDriver_formatting import definesHeader
+from pinDriver_formatting import typedefsHeader
+from pinDriver_formatting import privFuncDecHeader
+from pinDriver_formatting import privDataDefHeader
+from pinDriver_formatting import pubDataDefHeader
+from pinDriver_formatting import privFuncHeader
+from pinDriver_formatting import pubFuncHeader
+from pinDriver_formatting import include_one
+from pinDriver_formatting import include_two
+
 #.json initilization
 import json
 
 pinDriver = open('test.json')
-pinDriver_dict = json.load(pinDriver)
-
-#formatting variables declared
-includesHeader = ("/******************************************************************************\n"
-" *                              I N C L U D E S                               *\n"
-" *****************************************************************************/")
-
-definesHeader = ("/******************************************************************************\n"
-" *                               D E F I N E S                                *\n"
-" *****************************************************************************/")
-
-typedefsHeader = ("/******************************************************************************\n"
-" *                              T Y P E D E F S                               *\n"
-" *****************************************************************************/")
-
-privFuncDecHeader = ("/******************************************************************************\n"
-" *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *\n"
-" *****************************************************************************/")
-
-privDataDefHeader = ("/******************************************************************************\n"
-" *              P R I V A T E   D A T A   D E F I N I T I O N S               *\n"
-" *****************************************************************************/")
-
-pubDataDefHeader = ("/******************************************************************************\n"
-" *              P U B L I C   D A T A   D E F I N I T I O N S               *\n"
-" *****************************************************************************/")
-
-privFuncHeader = ("/******************************************************************************\n"
-" *                     P R I V A T E   F U N C T I O N S                      *\n"
-" *****************************************************************************/")
-
-pubFuncHeader = ("/******************************************************************************\n"
-" *                      P U B L I C   F U N C T I O N S                       *\n"
-" *****************************************************************************/")
-
-#include statements declared as variables
-include_one = "#include \"HW_pinDriver.h\""
-include_two = "#include <stdint.h>"
+pinDriver_list = json.load(pinDriver)
 
 #print statements for constant formatting
-print(includesHeader)
-print(include_one)
-print(include_two)
-print("\n", end = "")
-print(definesHeader)
-print("\n\n", end = "")
-print(typedefsHeader)
-print("\n\n", end = "")
-print(privFuncDecHeader)
-print("\n\n", end = "")
-print(privDataDefHeader)
-print("\n\n", end = "")
-print(pubDataDefHeader)
-print("\n", end = "")
+print("{}\n{}\n{}\n\n{}\n\n\n{}\n\n\n{}\n\n\n{}\n\n\n{}\n".format(includesHeader, include_one, include_two, definesHeader, typedefsHeader, privFuncDecHeader, privDataDefHeader, pubDataDefHeader))
 
 #print statements for array declaration
 print("extern const HW_pinConfig_S HW_pinConfig[HW_PIN_COUNT];")
@@ -63,33 +24,21 @@ print("const HW_pinConfig_S HW_pinConfig[HW_PIN_COUNT] =")
 
 print("{")
 
-#if pinDriver_dict != None:
+for dict in pinDriver_list:
+    print("\t[{}] = \n\t{{\n\t\t.pinID = {},\n\t\t.pinDirection = {},".format(dict.get('name'), dict.get('pinID'), dict.get('pinDirection')))
 
-for i in range(len(pinDriver_dict)):
-    print("\t[", end = "")
-    print(pinDriver_dict[i].get('name'), end = "")
-    print("] =")
-    print("\t{")
-    print("\t\t.pinID =", pinDriver_dict[i].get('pinID'), end = "")
-    print(",")
-    print("\t\t.pinDirection =", pinDriver_dict[i].get('pinDirection'), end = "")
-    print(",")
-
-    if pinDriver_dict[i].get('pinDirection') == "OUTPUT":
-        print("\t\t.initState =", pinDriver_dict[i].get('initState'), end = "")
-        print(",")
-        if pinDriver_dict[i] == pinDriver_dict[-1]:
+    if dict.get('pinDirection') == "OUTPUT":
+        print("\t\t.initState = {},".format(dict.get('initState')))
+        if dict == pinDriver_list[-1]:
             print("\t}")
         else:
             print("\t},")
-
+    
     else:
-        if pinDriver_dict[i] == pinDriver_dict[-1]:
+        if dict == pinDriver_list[-1]:
             print("\t}")
         else:
             print("\t},")
 
 print("};")
-print(privFuncHeader)
-print("\n\n", end = "")
-print(pubFuncHeader)   
+print("{}\n\n\n{}".format(privFuncHeader, pubFuncHeader))
