@@ -11,7 +11,7 @@ What are these files?
 
 
 ====================================================================================================
-Function Signature Convention (subject to change)
+Function Signature Convention and Type Conventions (subject to change)
 ====================================================================================================
 
  --> return_type mcp2515_c_functionName(void *device, other_params){ ... }
@@ -21,4 +21,5 @@ Function Signature Convention (subject to change)
            ENUMNAME_MEMBERDESCRIPTION0_C = 0,
 	   ENUMNAME_MEMBERDESCRIPTION1_C = 1,
      } ENUMNAME_C;
+
 
