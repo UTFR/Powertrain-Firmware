@@ -7,13 +7,17 @@ What are these files?
 
  --> mcp2515_c_connector.h and mcp2515_c_connector.cpp expose the functions in the MCP2515 class
      in pure C so the driver code can extended without C++. 
-	- Simply call the functions in these files from any C file/directly from your Arduino code.
+	- Simply call the functions in these files from any C file or directly from your Arduino code.
 
 
 ====================================================================================================
-Function Signature Convention (subject to change)
+Function Signature Convention and Type Conventions (subject to change)
 ====================================================================================================
 
  --> return_type mcp2515_c_functionName(void *device, other_params){ ... }
  	- NOTE: return_type and other_params must be C compatible types/structs
-    
+	
+ --> typedef enum {
+           ENUMNAME_MEMBERDESCRIPTION0_C = 0,
+	   ENUMNAME_MEMBERDESCRIPTION1_C = 1,
+     } ENUMNAME_C;
