@@ -8,6 +8,9 @@
 #include "IO_thermistors.h"
 #include "IO_relays.h"
 
+#include <SPI.h>
+#include <mcp2515.h> // If crash on this line, go to Sketch->Include Library->Add .zip library
+
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
@@ -33,6 +36,10 @@
  *              P R I V A T E   D A T A   D E F I N I T I O N S               *
  *****************************************************************************/
 
+struct can_frame BMS_RX;
+struct can_frame ACM_TX;
+
+MCP2515 ACM_controller(HW_pins[HW_PIN_CAN1_CS].pinNum);
 
 /******************************************************************************
  *                     P R I V A T E   F U N C T I O N S                      *
@@ -270,17 +277,45 @@ void app_benchSelfTest(void) // only to be used on the bench with NO high voltag
 /******************************************************************************
  *                    P R O G R A M   E X E C U T I O N                       *
  *****************************************************************************/
+void BMStoACM(){
+
+  if (ACM_controller.readMessage(&BMS_RX) == MCP2515::ERROR_OK) {
+    
+    Serial.print("DLC:");
+    Serial.print(BMS_RX.can_dlc);
+    for (int i = 0; i<BMS_RX.can_dlc; i++)  {  // print the data
+      
+      Serial.print(" ");
+      Serial.print(BMS_RX.data[i],HEX);
+      Serial.print(" ");
+    }
+    Serial.println("");
+  }
+  else
+  {
+    Serial.println("ERROR: interrupt without message");
+  }
+}
 
 void setup() {
   Serial.begin(9600);
   Serial.println("ACM booting up");
 
   HW_setupPins();
-  app_benchSelfTest();
+  //app_benchSelfTest();
+
+  ACM_controller.reset();
+  ACM_controller.setBitrate(CAN_500KBPS);
+  ACM_controller.setNormalMode();
+  ACM_TX.can_id = 0x0A1;
+  ACM_TX.can_dlc = 0x1;
+  ACM_TX.data[0] = 0x0A2;
+  attachInterrupt(digitalPinToInterrupt(HW_pins[HW_PIN_CAN1_INT].pinNum), BMStoACM, LOW);
 }
 
 
 void loop() {
-  
+  ACM_controller.sendMessage(&ACM_TX);
+  delay(975);
 
 }

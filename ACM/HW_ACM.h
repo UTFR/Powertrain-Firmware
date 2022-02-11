@@ -32,12 +32,12 @@ typedef enum
   HW_PIN_RTD_BUZZER_EN,
   HW_PIN_EN_AIRN,
   HW_PIN_SDC_EN,
+  HW_PIN_CAN1_CS,
+  HW_PIN_CAN1_INT,
   HW_PIN_RTD_CONFIRM,
   HW_PIN_CAN2_INT,
-  HW_PIN_CAN1_CS,
   HW_PIN_MISO,
   HW_PIN_MOSI,
-  HW_PIN_CAN1_INT,
   HW_PIN_CAN2_CS,
   HW_PIN_AMS_HFL_FAULT,
   
@@ -172,6 +172,20 @@ HW_pin_S HW_pins[HW_PIN_COUNT] =
   {
     .pinNum = 7,
     .isOutput = true,
+    .activeLow = false,
+    .physicalState = false
+  },
+  [HW_PIN_CAN1_CS] = 
+  {
+    .pinNum = 10,
+    .isOutput = true,
+    .activeLow = false,
+    .physicalState = false
+  },
+  [HW_PIN_CAN1_INT] = 
+  {
+    .pinNum = 2,
+    .isOutput = false,
     .activeLow = false,
     .physicalState = false
   }
