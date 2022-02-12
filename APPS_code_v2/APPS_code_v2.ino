@@ -123,7 +123,7 @@ void loop()
   output_good = GET_DEV(APPS_output, APPS_out_verify) < OUTPUT_DEVIATION_;
   error_flag_set = (time_at_error != BASE_TIME_);
 
-  //=========OUTPUT PROCESSING==========//
+  //========= O U T P U T    P R O C E S S I N G ==========//
 
   if (exceed_time_allowance)
   {
