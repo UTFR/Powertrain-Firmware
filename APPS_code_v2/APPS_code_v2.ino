@@ -30,9 +30,9 @@
 /******************************************************************************
  *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
  *****************************************************************************/
-void sendOutput();
-void reportError();
-void shutDown();
+static void sendOutput();
+static void reportError();
+static void shutDown();
 
 /******************************************************************************
  *              P R I V A T E   D A T A   D E F I N I T I O N S               *
@@ -42,7 +42,7 @@ MCP4911 DAC; // HW DAC
 int APPS_1_in = 0;
 int APPS_2_in = 0; 
 int APPS_output = 0;
-float APPS_out_verify = 0; 
+int APPS_out_verify = 0; 
 float APPS_1_throttle = 0;
 float APPS_2_throttle = 0;
 long time_at_error = BASE_TIME_; // unsigned long type according to arduino docs, not sure about this
@@ -58,7 +58,7 @@ bool error_flag_set = false;
  *****************************************************************************/
 void sendOutput()
 {
-  APPS_output = (APPS_1_throttle + APPS_2_throttle) / 2; // send out the mean of both inputs
+  APPS_output = round( (APPS_1_throttle + APPS_2_throttle) / 2 ); // send out the mean of both inputs
   DAC.analogWrite(APPS_output, 0);
 }
 
@@ -114,7 +114,7 @@ void loop()
   APPS_2_in = analogRead(A1);
   APPS_out_verify = analogRead(A5);
 
-  // model each APPS as a straight line
+  // Normalize pedal position readings so we can compare them
   APPS_1_throttle = ANALOG_CONSTANT * (APPS_1_in / ANALOG_CONSTANT - APPS_1_LOW_) / (APPS_1_HIGH_ - APPS_1_LOW_);
   APPS_2_throttle = ANALOG_CONSTANT * (APPS_2_in / ANALOG_CONSTANT - APPS_2_LOW_) / (APPS_2_HIGH_ - APPS_2_LOW_);
 
