@@ -2,7 +2,7 @@
 
 void UTFR_ERROR_CAN::UTFR_ERROR_CAN(const int pin) : CAN(pin);
 
-void UTFR_ERROR_CAN::init_can(){
+void UTFR_ERROR_CAN::initCan(){
     while (CAN_OK != CAN.begin(CAN_500KBPS)) {
         Serial.println("ERROR_CAN init fail - trying again...");
         delay(100);
@@ -14,9 +14,9 @@ void UTFR_ERROR_CAN::init_can(){
     Serial.println("ERROR_CAN Init success!");
 }
 
-bool UTFR_ERROR_CAN::send_can_error(const unsigned char &msg){
+bool UTFR_ERROR_CAN::sendError(const unsigned char &msg){
     if (msg.length != 8) {
-        Serial.println("UTFR_ERROR_CAN::send_can_error : error message length incorrect!")
+        Serial.println("UTFR_ERROR_CAN::sendError: Error message length incorrect!")
         return false;
     }
     CAN.sendMsgBuf(_kERROR_MSG_ID, 0, 8, msg)
