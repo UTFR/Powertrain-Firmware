@@ -1,9 +1,9 @@
 #include "UTFR_APPS_DAC.h"
 
 // ###################################################################################
-// ######### Call in setup() --> Don't forget to also call APPS_DAC.begin(select) ####
+// ######### Call in setup() #########################################################
 // ###################################################################################
-UTFR_APPS_DAC::UTFR_APPS_DAC(uint8_t dataOut, uint8_t clock) : MCP4911(dataOut, clock)
+UTFR_APPS_DAC::UTFR_APPS_DAC(uint8_t dataOut, uint8_t clock) : DAC(dataOut, clock)
 {
     // initalize the  data ready and chip select pins:
     pinMode(A0, INPUT);
@@ -14,10 +14,16 @@ UTFR_APPS_DAC::UTFR_APPS_DAC(uint8_t dataOut, uint8_t clock) : MCP4911(dataOut, 
     delay(100);
 }
 
+void UTFR_APPS_DAC::begin(int CS){
+
+    _kDAC_CS = CS;
+    DAC.begin(CS);
+
+}
+
 // #######################################################
 // ################ Call in loop() #######################
 // #######################################################
-
 void UTFR_APPS_DAC::processThrottlePosition()
 {
     // read in the voltage values and convert to digital
@@ -71,7 +77,7 @@ void UTFR_APPS_DAC::sendOutput()
 {
     _APPS_output = round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // take average and round
     
-    analogWrite(_APPS_output, 0);
+    DAC.analogWrite(_APPS_output, 0);
 }
 
 void UTFR_APPS_DAC::reportError()
@@ -84,6 +90,6 @@ void UTFR_APPS_DAC::reportError()
 
 void UTFR_APPS_DAC::shutDown()
 {
-    analogWrite(0, 0);  // send out zero throttle
+    DAC.analogWrite(0, 0);  // send out zero throttle
     // ADD COMMS WITH MEGA HERE (Tell mega to trip SDC/ disconnect LV from chassis ground)
 }

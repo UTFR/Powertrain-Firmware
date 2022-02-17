@@ -1,7 +1,7 @@
 #include "UTFR_APPS_DAC.h"
 
 UTFR_APPS_DAC apps;
-const int kDAC_CS_ = 7;      // DAC CS pin
+const int DAC_CS = 8;      // DAC CS pin
     
 void setup()
 {
@@ -9,7 +9,7 @@ void setup()
   Serial.begin(9600);
 
   // initialize DAC:
-  apps.begin(kDAC_CS_);
+  apps.begin(DAC_CS);
   
 }
 
