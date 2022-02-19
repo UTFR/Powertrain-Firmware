@@ -1,0 +1,55 @@
+int red_light_pin= 11;
+int green_light_pin = 10;
+int blue_light_pin = 9;
+
+enum colour { red, green, blue, raspberry, cyan, magenta, yellow, white, off };
+
+void setup() {
+  pinMode(red_light_pin, OUTPUT);
+  pinMode(green_light_pin, OUTPUT);
+  pinMode(blue_light_pin, OUTPUT);
+}
+
+void loop() {
+  // insert the use for functions 
+}
+
+void RGB_color(int red_light_value, int green_light_value, int blue_light_value)
+ {
+  analogWrite(red_light_pin, red_light_value);
+  analogWrite(green_light_pin, green_light_value);
+  analogWrite(blue_light_pin, blue_light_value);
+}
+
+// function for controlling the colour for the RGB LEDs
+
+void RGB_control (colour type, int duration, int brightness) // brightness is set from 0-255
+ {
+  int delayTime = duration* 1000;
+  
+    if (type == red){
+    RGB_color(brightness, 0, 0); // Red
+  }
+    if (type == blue){
+      RGB_color(0, 0, brightness); // Blue
+  }
+    if (type == raspberry){
+      RGB_color(brightness, brightness, brightness/2); // Raspberry
+  }
+    if (type == cyan){
+      RGB_color(0, brightness, brightness); // Cyan
+  }
+    if (type == magenta){
+      RGB_color(brightness, 0, brightness); // Magenta
+  }
+    if (type == yellow){
+      RGB_color(brightness, brightness, 0); // Yellow
+  }
+    if (type == white){
+      RGB_color(brightness, brightness, brightness); // White
+  }
+    if (type == off){
+      RGB_color(0, 0, 0); // off
+  }
+    delay(delayTime);
+}
