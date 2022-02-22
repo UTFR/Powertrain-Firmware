@@ -2,6 +2,19 @@
 #include "MCP_DAC.h"
 MCP4911 DAC;
 
+
+MCP4911 DAC;
+
+/*  Functions */
+void shutdown()
+{
+  DAC.analogWrite(0, 0);
+}
+
+
+
+
+
 void setup()
 {
     Serial.begin(115200);
