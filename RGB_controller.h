@@ -10,10 +10,10 @@ class GRB{
         int duration, brightness;
         const int kRGBSlavePin;
         void RGBSetup(int kGRBSlavePin);
-        void RGBControl(colour type, int duration, int brightness)
+        void RGBControl(colour type, int duration, int brightness);
 
     private:
-        void RGBColor(int _redLightValue, int _greenLightValue, int _blueLightValue)
+        void RGBColor(int _redLightValue, int _greenLightValue, int _blueLightValue);
 
 };
 
