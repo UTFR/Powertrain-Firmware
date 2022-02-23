@@ -12,7 +12,7 @@
 #define APPS_1_LOW_ 1.25
 #define APPS_2_LOW_ 1.125
 
-#define DAC_CS_ = 8
+#define DAC_CS_ 8
 #define TIME_ALLOWANCE_ 100 // maximum error time allowed in milliseconds. rule T.4.2.5
 #define THROTTLE_MAX_DEVIATION_ 0.10 // rule T.4.2.4
 #define OUTPUT_DEVIATION_ 0.03 // abitrary value for time_now, will be determined experimentally
