@@ -1,1 +1,1 @@
-Hardware abstraction for the Arduino Micro Shield
+Hardware abstraction for the Arduino Micro of the rear controller
