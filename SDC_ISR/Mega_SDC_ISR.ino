@@ -47,9 +47,6 @@ void SDC_ISR(){
  *                      P U B L I C   F U N C T I O N S                       *
  *****************************************************************************/
 
-
-
-
 void setup()
 {
 
@@ -82,9 +79,9 @@ if (SDC_TRIPPED == true) {
     }
     if (serialData != " ")
     {
-      if (serialData == "sucess") // change the success parameter later
+      if (serialData == "SDC1") 
       {
-        shutdown();
+        shutdown();// need to make shutdown function
       }
       else
       {
