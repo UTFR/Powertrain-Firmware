@@ -59,22 +59,22 @@ void setup() {
 void loop() {
 
  
-  if (readback != 0){
-       SDC_ISR()
-    }
+  
   
   if (SDC_TRIPPED) {
+    if (readback != 0){
+       SDC_ISR()
+    }
+
     if(apps.confirmShutdown() == true){
-      Serial.println("SDC1");
+      Serial.println("SDC1"); 
     } else{
       apps.shutDown()
       Serial.println("SDC0");
     }
-    
     // TO DO: while readback != 0, try to send 0 torque to inverter
     // TO DO: if timeout, send failure message to Mega - Mega alerts other systems
     // TO DO: if success, send success message to Mega
-
     // call shutdown function
     
   }
