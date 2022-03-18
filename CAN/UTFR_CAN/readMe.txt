@@ -7,14 +7,13 @@
  */
 
 
- ** We create a unique library version for each MCU (RC Mega + RC Micro + ACM + Corners). **
-
- This unique instance will contain the message data structures for all messages handled by this MCU.
+ The plan is to create a unique library version for each MCU (RC Mega, ACM, CAN ISO, Corners).
+ Each unique version will contain the message data structures for all messages handled by that MCU.
 
 
 ========== INSTALL THESE LIBRARIES ======================
 =========================================================
-  --> ArduinoSTL version 1.3.3  (Comment out #define ARDUINOSTL_DEFAULT_CIN_COUT in ArduinoSTL.cpp to minimize size)
+  --> ArduinoSTL version 1.3.3
   --> CAN-BUS Shield version 1.0.0
 
 
@@ -31,7 +30,7 @@
   --> CTRL+F replace all "UTFR_CAN" with "UTFR_CAN_VERSIONNAME"
 
   --> Message field definitions       (in #defines at top of file)
-  --> CAN_msgNames_E enumeration      (directly below #defines)
+  --> CAN_msgNames_E enumeration      (directly below #defines, above class)
 
-  --> _CAN_msgArray initialization    (in private data definitions within class)
-  --> _CAN_filterArray initialization (in private data definitions within class)
+  --> _CAN_msgArray initialization    (in private data definitions, within class)
+  --> _CAN_filterArray initialization (in private data definitions, within class)

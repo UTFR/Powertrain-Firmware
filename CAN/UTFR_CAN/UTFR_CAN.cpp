@@ -1,5 +1,5 @@
 #include "UTFR_CAN.h"
-#include "UTFR_CAN.h"
+
 
 // Constructor
 UTFR_CAN::UTFR_CAN(uint8_t CS)
@@ -7,6 +7,10 @@ UTFR_CAN::UTFR_CAN(uint8_t CS)
     // Initialize CAN node
     _CS = CS;
     _NODE.init_CS(_CS);
+
+    #ifdef debugMode
+    Serial.println("Node instantiated correctly.");
+    #endif
 
 }
 
@@ -69,14 +73,20 @@ void UTFR_CAN::sendMsg(CAN_msgNames_E msgName)
 }
 
 
-// Get field data by name
+/*!
+* @brief    Get data field by name.
+*
+* @param[in]        msgName    Name of message, defined in _CAN_msgArray
+* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_version.h
+*
+* @return    unsigned long     Data of gotten field
+*
+*/
 unsigned long UTFR_CAN::getField(CAN_msgNames_E msgName, uint8_t fieldName)
 {
     long fieldData = 0;                                             // unsigned long is 4 bytes - assumes no field is longer than this
     uint8_t fieldIndex = 0;                                         // fieldIndex: tracks loop position in field data
-    uint8_t msgField = 0;
-
-    _CAN_msgArray[msgName].isDirty = false;                           
+    uint8_t msgField = 0;                          
 
     for (uint8_t dataIndex=0; dataIndex < 8; dataIndex++)
     {   
@@ -84,6 +94,8 @@ unsigned long UTFR_CAN::getField(CAN_msgNames_E msgName, uint8_t fieldName)
 
         if (msgField == fieldName)
         {
+            _CAN_msgArray[msgName].isDirty = false; 
+
             // Get 1-byte of data, cast from uint8_t to long, shift appropriately, add to total
             fieldData +=  static_cast<long>(_CAN_msgArray[msgName].msgData[dataIndex]) << (fieldIndex * 8); 
             fieldIndex += 1;
@@ -99,14 +111,21 @@ unsigned long UTFR_CAN::getField(CAN_msgNames_E msgName, uint8_t fieldName)
 }
 
 
-// Set field data by name
+/*!
+* @brief    Set data field by name.
+*
+* @param[in]        msgName    Name of message, defined in _CAN_msgArray
+* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_version.h
+* @param[in]        fieldData  The data you want to copy into the field
+*
+*/
 void UTFR_CAN::setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData)
 {
     unsigned long fieldMask = 0xFF;
     uint8_t fieldIndex = 0;
     uint8_t msgField = 0;
 
-    if (!_CAN_msgArray[msgName].isTx)           // Shouldn't be setting fields in receive-only messages
+    if (!_CAN_msgArray[msgName].isTx)
     {
         Serial.print("Should not manually set field in Rx-only message "); Serial.println(msgName); 
         return;
@@ -118,7 +137,8 @@ void UTFR_CAN::setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldDat
 
         if (msgField == fieldName)
         {
-            _CAN_msgArray[msgName].msgData[dataIndex] = fieldData & (fieldMask << (fieldIndex * 8)); 
+            // Mask out correct byte of fieldData, shift back to LSB, cast to uint8_t, copy to msg array
+            _CAN_msgArray[msgName].msgData[dataIndex] = static_cast<uint8_t>( (fieldData & (fieldMask << (fieldIndex * 8))) >> (fieldIndex * 8) ); 
             fieldIndex += 1;
         }
     }
@@ -202,4 +222,22 @@ void UTFR_CAN::setFilters_permitNone()
             _NODE.init_Filt(i-2, _ext, 0);
         }
     }
+}
+
+
+// Prints all data stored in a given message (Note: will be in decimal format)
+void UTFR_CAN::printMsgData(CAN_msgNames_E msgName)
+{
+    Serial.print("Message "); Serial.print(msgName); Serial.print(" data: { ");
+
+    for (uint8_t dataIdx=0; dataIdx<8; dataIdx++)
+    {
+        Serial.print(_CAN_msgArray[msgName].msgData[dataIdx]); 
+        if (dataIdx < 7)
+        {
+            Serial.print(" , ");
+        }
+    }
+
+    Serial.println(" }");
 }

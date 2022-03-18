@@ -160,6 +160,8 @@ class UTFR_CAN
         void setFilters_permitAll(void);                                    // set masks and filters to receive ALL messages sent by other nodes
         void setFilters_permitNone(void);                                   // set masks and filters to receive NO messages sent by other nodes
 
+        void printMsgData(CAN_msgNames_E msgName);                          // Prints all data stored in a given message (Note: will be in decimal format)
+
         // TO DO: Functions that return void should return error_types defined in an enum. Makes debug easier.
             // Done by Kelvin in UTFR_ERROR.h ?
 
