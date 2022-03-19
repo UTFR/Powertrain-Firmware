@@ -1,0 +1,32 @@
+#######################################
+# Syntax Coloring Map For UTFR_CAN
+#######################################
+# Class
+#######################################
+
+UTFR_CAN	        KEYWORD1
+
+
+#######################################
+# Methods and Functions
+#######################################	
+
+begin			KEYWORD2
+sendAll			KEYWORD2
+sendMsg			KEYWORD2
+receiveMsgs		KEYWORD2
+getField		KEYWORD2
+setField		KEYWORD2
+setFilters		KEYWORD2
+setFilters_permitAll	KEYWORD2
+setFilters_permitNone	KEYWORD2
+printMsgData		KEYWORD2
+
+
+#######################################
+# Constants
+#######################################
+
+# add field names and message names here if desired
+
+
