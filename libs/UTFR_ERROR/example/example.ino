@@ -1,3 +1,15 @@
+/**
+ * @file example.ino
+ * @author Kelvin Cui
+ * @brief UTFR_ERROR sample implementation - shows required setup, and sends a sample_error over CAN to the datalogger.
+ *      
+ * @version 1.0
+ * @date 2022-02-16
+ * 
+ * @copyright University of Toronto Formula Racing 
+ * 
+ * 
+ */
 #include "UTFR_ERROR.h"
 
 #define HW_PIN_CS_TEST 10           // Change to proper CS pin
