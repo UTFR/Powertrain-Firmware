@@ -1,17 +1,25 @@
-
+/**
+ * @file BMS.ino
+ * @author Spencer Ball, Kelvin Cui
+ * @brief BMS Monitoring Code
+ *      
+ * @version 1.0
+ * @date 2022-03-22
+ * 
+ * @copyright University of Toronto Formula Racing 
+ * 
+ * 
+ */
 
 /******************************************************************************
-
  *                              I N C L U D E S                               *
-
  *****************************************************************************/
 
 #include <SPI.h>
+#include "UTFR_ERROR.h"
 
 /******************************************************************************
-
  *                               D E F I N E S                                *
-
  *****************************************************************************/
 
 #define ANALOG_CONSTANT 1023           // 10-bit ADC resolution
@@ -38,6 +46,8 @@
 
 #define HW_PIN_CHASSIS_DSC 39
 
+#define HW_PIN_CS 10           // Change to proper CS pin
+
 #define VOLTAGE_LOWER_CUTOFF 2.5 //TO DOs: Confirm these values
 
 #define VOLTAGE_UPPER_CUTOFF 4.2 
@@ -46,9 +56,7 @@
 
 
 /******************************************************************************
-
  *                              T Y P E D E F S                               *
-
  *****************************************************************************/
 
 typedef enum                  // TO DO: move to header file
@@ -94,6 +102,8 @@ HW_MUX_E EnumOfIndex(int i);          // TO DO: Move to header file
 
  *****************************************************************************/
 
+UTFR_ERROR ERROR_NODE(HW_PIN_CS_TEST);       // Create Error Node Object
+
 float readVoltage = 0.0;
 float readTemp = 0.0;
 
@@ -134,13 +144,13 @@ float checkVoltage(HW_MUX_E muxPin) // Returns the voltage read for a given mux 
 
   if (analogVoltage < VOLTAGE_LOWER_CUTOFF) {
       Serial.println("BMS_UNDERVOLTAGE_ERROR");
-      //SEND CAN ERROR
+      ERROR_NODE.sendError(BMS_UNDERVOLTAGE_ERROR);
       //SHUTDOWN
   }
 
   else if (analogVoltage > VOLTAGE_UPPER_CUTOFF) {
       Serial.println("BMS_OVERVOLTAGE_ERROR");
-      //SEND CAN ERROR
+      ERROR_NODE.sendError(BMS_OVERVOLTAGE_ERROR);
       //SHUTDOWN
   }
 
@@ -153,7 +163,7 @@ void checkTemp() {
 
     if (temp1 > TEMP_UPPER_CUTOFF || temp2 > TEMP_UPPER_CUTOFF){
         Serial.println("BMS_OVERTEMP_ERROR");
-        //SEND CAN ERROR
+        ERROR_NODE.sendError(BMS_OVERTEMP_ERROR);
         //SHUTDOWN
     }
 }
@@ -166,7 +176,6 @@ HW_MUX_E EnumOfIndex(int i)     // Converts integer value to corresponding enum
   return static_cast<HW_MUX_E>(i); 
 
 }
-
 
 /******************************************************************************
 
@@ -181,6 +190,8 @@ void setup()
   // put your setup code here, to run once:
 
   Serial.begin(9600);
+
+  ERROR_NODE.begin(CAN_500KBPS);
 
   pinMode(HW_PIN_MUX_SA, OUTPUT);     // TO DO: replace with pin abstraction
 
