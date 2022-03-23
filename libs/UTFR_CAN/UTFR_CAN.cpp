@@ -1,5 +1,5 @@
 #include "UTFR_CAN.h"
-
+#include <TimerOne.h>
 
 // Constructor
 UTFR_CAN::UTFR_CAN(uint8_t CS)
@@ -240,4 +240,12 @@ void UTFR_CAN::printMsgData(CAN_msgNames_E msgName)
     }
 
     Serial.println(" }");
+}
+
+void UTFR_CAN::setMsgFreq(CAN_msgNames_E msgName, int freq)
+{
+    Unsigned long int microSecPerSec = 1000000;
+    //Intializing timer
+    Timer1.initialize(microSecPerSec/freq); //Sets timer duration 
+    Timer1.attachInterrupt(msgSendISR);
 }

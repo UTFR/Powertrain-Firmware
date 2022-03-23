@@ -25,6 +25,16 @@
 #define RF_CTR_TIRE_TEMP_F  2               // 2nd field
 #define RF_INR_TIRE_TEMP_F  3               // etc...
 #define RF_ROTOR_TEMP_F     4
+//Ports for RF0 sensors
+#define HW_PIN_RF_OUT_TIRE_TEMP  A0
+#define HW_PIN_RF_CTR_TIRE_TEMP  A1
+#define HW_PIN_RF_INR_TIRE_TEMP  A2
+#define HW_PIN_RF_ROTOR_TEMP A3
+//Ports for RF1 Sensors
+#define HW_PIN_RF_DAMPER_POT  A4
+#define HW_PIN_FW_STRAIN_GAUGE_TIP A5
+#define HW_PIN_STEERING_ANGLE  A6
+
 
 // RF1 - Right Front corner module CAN message 1
 #define RF_DAMP_POT_F       1
@@ -165,11 +175,33 @@ class UTFR_CAN
         // TO DO: Functions that return void should return error_types defined in an enum. Makes debug easier.
             // Done by Kelvin in UTFR_ERROR.h ?
 
-
+	void setMsgFreq(CAN_msgNames_E msgName, int freq);
     /******************************************************************************
      *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
      *****************************************************************************/
     private:
+	void msgSendISR() 
+	{
+		//Get data from sensors:
+		long rf0SensorData [4] = {analogRead(HW_PIN_RF_OUT_TIRE_TEMP), analogRead(HW_PIN_RF_CTR_TIRE_TEMP);
+					analogRead(HW_PIN_RF_INR_TIRE_TEMP), analogRead(HW_PIN_RF_ROTOR_TEMP)};
+		long rf1SensorData [3] = {analogRead(HW_PIN_RF_DAMPER_POT), analogRead(HW_PIN_FW_STRAIN_GAUGE_TIP),
+                                           analogRead(HW_PIN_STEERING_ANGLE)};
+		
+		//Store data from RF0 sensors
+		for(int sensorIndex=0; sensorInex<4; sensorIndex++){
+			unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[sensorIndex*2];
+			setField(CAN_MSG_RF0, field, rf0SensorData[sensorIndex]); 
+		} 
+		//Storing Data from RF1 sensors
+		for(int sensorIndex=0; sensorIndex<3; sensorIndex++){
+                        unint8_t field = _CAN_msgArray[CAN_MSG_RF1].msgFields[sensorIndex*2];
+                        setField(CAN_MSG_RF1, field, rf1SensorData[sensorIndex]);
+                 }
+		
+		//Send Sensor data messages
+	        sendMsg(CAN_MSG_RF0);
+	        sendMsg(CAN_MSG_RF1);
+	};
 };
-
 #endif
