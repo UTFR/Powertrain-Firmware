@@ -1,7 +1,7 @@
-/* This file contains helpful macros and constants for
- * the University of Toronto's Formula SAE Racing Team.
+/* This file contains helpful macros, templates, and constants 
+ * for the University of Toronto's Formula SAE Racing Team.
  * 
- * Contributors: Jake Sprenger, 2021
+ * Contributors: Jake Sprenger, Spencer Ball 2021/22
  */
 
 #ifndef LIB_UTIL_H
@@ -24,5 +24,10 @@
 #define UNUSED(x) (void)(x)
 #endif
 
-#endif /* LIB_UTIL_H
+template <class X, class M, class N, class O, class Q>              // see standard Arduino map() function for usage
+X map_Generic(X x, M in_min, N in_max, O out_min, Q out_max){       // this is the same but can use any number type (floats!)
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+#endif /* LIB_UTIL_H */
 

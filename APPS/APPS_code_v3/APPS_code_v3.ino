@@ -1,7 +1,7 @@
 #include "UTFR_APPS_DAC.h"
 
-UTFR_APPS_DAC apps;
-const int DAC_CS = 8;      // DAC CS pin
+UTFR_APPS_DAC APPS;
+const int DAC_CS = 7;      // DAC CS pin
     
 void setup()
 {
@@ -9,11 +9,10 @@ void setup()
   Serial.begin(9600);
 
   // initialize DAC:
-  apps.begin(DAC_CS);
-  
+  APPS.begin(DAC_CS);
 }
 
 void loop()
 {
-  apps.processThrottlePosition();
+  APPS.processThrottlePosition();
 }
