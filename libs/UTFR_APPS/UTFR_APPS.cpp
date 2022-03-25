@@ -1,18 +1,20 @@
-#include "UTFR_APPS_DAC.h"
+#include "UTFR_APPS.h"
 
 
-UTFR_APPS_DAC::UTFR_APPS_DAC(uint8_t dataOut, uint8_t clock) : DAC(dataOut, clock)
+UTFR_APPS::UTFR_APPS(uint8_t dataOut, uint8_t clock)  : DAC(dataOut, clock)
 {
+
+}
+
+void UTFR_APPS::begin(int CS){
+
+    // give the sensor time to set up:
+    delay(100);
+
     // initalize the  data ready and chip select pins:
     pinMode(A0, INPUT);                 // APPS_In_1_Analog pin
     pinMode(A1, INPUT);                 // APPS_In_2_Analog pin
     pinMode(A5, INPUT);                 // APPS_Out_Analog
-
-    // give the sensor time to set up:
-    delay(100);
-}
-
-void UTFR_APPS_DAC::begin(int CS){
 
     _APPS_1_high = getDigital(_kAPPS_1_HIGH);
     _APPS_1_low = getDigital(_kAPPS_1_LOW);
@@ -24,16 +26,26 @@ void UTFR_APPS_DAC::begin(int CS){
 }
 
 
-void UTFR_APPS_DAC::processThrottlePosition()
-{
+void UTFR_APPS::processThrottlePosition()
+{   
     // read in the voltage values and convert to digital
     _APPS_1_in = analogRead(A0);
     _APPS_2_in = analogRead(A1);
     _APPS_out_verify = analogRead(A5);
 
+    #ifdef debugMode
+    Serial.print("Throttle out of DAC: "); Serial.println(_APPS_out_verify);
+    #endif
+
     // Normalize pedal position readings and multiply by _kANALOG_MAX so we can compare them
     _APPS_1_throttle = map_Generic(_APPS_1_in, _APPS_1_low, _APPS_1_high, 0.0, 255.0); 
     _APPS_2_throttle = map_Generic(_APPS_2_in, _APPS_2_low, _APPS_2_high, 0.0, 255.0);
+
+    #ifdef debugMode
+    Serial.print("APPS_1_throttle: "); Serial.println(_APPS_1_throttle);
+    Serial.print("APPS_2_throttle: "); Serial.println(_APPS_2_throttle);
+    #endif
+
 
     // set flags
     _throttle_good = GET_DEV(_APPS_1_throttle, _APPS_2_throttle) < _kTHROTTLE_MAX_DEVIATION;
@@ -68,19 +80,24 @@ void UTFR_APPS_DAC::processThrottlePosition()
     }
 }
 
-int UTFR_APPS_DAC::getDeviation(int value_1, int value_2)
-{
-    return abs((value_1 - value_2) / (value_1+0.0001));
-}
 
-void UTFR_APPS_DAC::sendOutput()
+void UTFR_APPS::sendOutput()
 {
-    _APPS_output = round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // take average and round
+    _APPS_output = round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // Take average and round
+
+    if (_shutdown == true)              // Ensures 0 throttle after shutdown() called (redundant on purpose) 
+    {                                               
+        _APPS_output = 0;                                                   
+    }
     
     DAC.analogWrite(_APPS_output, 0);
+
+    #ifdef debugMode
+    Serial.print("Throttle into DAC: "); Serial.println(_APPS_output);
+    #endif
 }
 
-void UTFR_APPS_DAC::reportError()
+void UTFR_APPS::reportError()
 {
     if (!_throttle_good)
         Serial.println("[APPS] Error: throttle values not in expected range of each other.");
@@ -88,12 +105,40 @@ void UTFR_APPS_DAC::reportError()
         Serial.println("[APPS] Error: throttle value was output incorrectly.");
 }
 
-void UTFR_APPS_DAC::shutDown()
+
+void UTFR_APPS::shutDown()
 {
-    DAC.analogWrite(0, 0);  // send out zero throttle
-    // ADD COMMS WITH MEGA HERE (Tell mega to trip SDC/ disconnect LV from chassis ground)
+    DAC.analogWrite(0, 0);          // Command zero throttle to inverter
+    _shutdown = true;
 }
 
-float getDigital(float voltage){
-  return round((voltage * ANALOG_CONSTANT)/10)*2.0;        // did it this way to make it a float again
+
+bool UTFR_APPS::getShutdownState()
+{
+    return _shutdown;
+}
+
+
+bool UTFR_APPS::confirmShutdown()
+{
+    uint8_t retry_count = 0;
+
+    while(retry_count < _confirm_shutdown_retries)
+    {
+        if (analogRead(A5) == 0)
+        {
+            return true;
+        }
+        else
+        {
+            retry_count += 1;
+        }
+    }
+
+    return false;
+}
+
+
+float UTFR_APPS::getDigital(float voltage){
+  return round((voltage * _kANALOG_MAX)/10)*2.0;        // did it this way to make it a float again
 }

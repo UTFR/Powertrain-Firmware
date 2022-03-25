@@ -1,20 +1,27 @@
 #include "MCP_DAC.h"
 #include "lib_util.h"
 
+#ifndef _UTFR_APPS_H_
+#define _UTFR_APPS_H_
+
+//#define debugMode         // Uncomment this line to enable debug prints
 
 #define GET_DEV(x, y) abs((x-y)/(x+0.0001))
 
-class UTFR_APPS_DAC {                      
+class UTFR_APPS {                      
 
     public:
 
-        UTFR_APPS_DAC(uint8_t dataOut = 255, uint8_t clock = 255);
+        UTFR_APPS(uint8_t dataOut = 255, uint8_t clock = 255);
         void begin(int CS);
         void processThrottlePosition();
+        void shutDown();
+        bool getShutdownState();                // returns true if shutdown() function has been called        
+        bool confirmShutdown();                 // returns true if output of DAC is 0
 
     private:
 
-        MCP4911 DAC;                                    // UTFR_APPS_DAC contains our DAC object (UTFR_APPS_DAC is now a composite class)
+        MCP4911 DAC;                                    // UTFR_APPS contains our DAC object (UTFR_APPS is now a composite class)
 
                                                         // "Composite" simply means it has a member which is an object of another class type (MCP4911 here)
                                                             // Composition helps avoid multiple inheritance
@@ -30,10 +37,11 @@ class UTFR_APPS_DAC {
         const float _kAPPS_1_LOW = 1.25;       
         const float _kAPPS_2_LOW = 1.25;      
 
-        const int _kTIME_ALLOWANCE = 100;               // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
+        const uint8_t _kTIME_ALLOWANCE = 100;           // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
         const float _kTHROTTLE_MAX_DEVIATION = 0.10;    // DO NOT CHANGE: Rule T.4.2.4
         const float _kOUTPUT_DEVIATION = 0.03;          // ** TO DO: Determine **
-        const long _kBASE_TIME = -1;
+        const int _kBASE_TIME = -1; 
+        const uint8_t _confirm_shutdown_retries = 20;
 
         float _APPS_1_high = 0.0;            // These will be the digital conversions of the constant voltage values above        
         float _APPS_2_high = 0.0;            // Used to calculate APPS_output
@@ -41,8 +49,8 @@ class UTFR_APPS_DAC {
         float _APPS_2_low = 0.0; 
 
         int _DAC_CS = 7;
-        int _APPS_1_in = 0;
-        int _APPS_2_in = 0;                             // 0 - 1023
+        float _APPS_1_in = 0;
+        float _APPS_2_in = 0;                             // 0 - 1023
         int _APPS_output = 0;
         int _APPS_out_verify = 0;                       // 0 - 1023
         float _APPS_1_throttle = 0.0;
@@ -55,11 +63,14 @@ class UTFR_APPS_DAC {
         bool _exceed_time_allowance = false;
         bool _error_flag_set = false;
 
-        static int getDeviation(int value_1, int value_2);
-        void sendOutput();
-        void reportError();
-        void shutDown();
+
+        bool _shutdown = false;
+
+        void sendOutput(void);
+        void reportError(void);
         int roundOutput(float value);
         float getDigital(float voltage);          // gets 10-bit digital representation of a float (voltage) 
 
 };
+
+#endif

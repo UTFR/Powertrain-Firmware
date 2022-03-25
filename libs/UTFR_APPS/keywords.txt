@@ -1,15 +1,14 @@
 # Syntax Colouring Map For UTFR_APPS_DAC
 
 # Data types (KEYWORD1)
-UTFR_APPS_DAC 			KEYWORD1
+UTFR_APPS 			KEYWORD1
 
 
 # Methods and Functions (KEYWORD2)
 processThrottlePosition		KEYWORD2
+shutDown			KEYWORD2
+getShutdownState		KEYWORD2
+confirmShutdown			KEYWORD2
 
 # Instances (KEYWORD2)
-apps				KEYWORD2
-
-# Constants (LITERAL1)
-kDAC_CS_			LITERAL1
-
+APPS				KEYWORD2
