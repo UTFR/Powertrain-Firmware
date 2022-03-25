@@ -1,15 +1,23 @@
 //#include "UTFR_COMMS.h"
 #include <SoftwareSerial.h>
 
-//SoftwareSerial microSerial(14, 15); // RX, TX
 char rec;
 byte sent_bytes;
+
+void SDC_ISR(void){
+  Serial.println("INTERRUPT RECIEVED SON!");
+}
 
 void setup() {
 
   Serial.begin(9600);
   //microSerial.begin(9600);
   Serial3.begin(9600);
+
+  pinMode(42, OUTPUT);      // sending INT to Micro on MS_COM4
+
+  pinMode(43, INPUT);       // receiving INT from Micro on MS_COM5
+  attachInterrupt(digitalPinToInterrupt(43), SDC_ISR, RISING);
   
 }
 void loop() {
@@ -23,6 +31,10 @@ void loop() {
   }
   Serial.println();
   
-  delay(50);
+  delay(1000);
   
+  digitalWrite(42,HIGH);
+  delay(200);
+  digitalWrite(42, LOW);
+
 }

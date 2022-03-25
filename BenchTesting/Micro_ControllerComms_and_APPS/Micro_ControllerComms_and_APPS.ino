@@ -68,6 +68,10 @@ byte sent_bytes;
 /******************************************************************************
  *                     F U N C T I O N S                                      *
  *****************************************************************************/
+
+void SDC_ISR(void){
+  Serial.println("INTERRUPT RECIEVED SON!");
+}
  
 float getDigital(float voltage){
   // converts voltage limits to digital values for use in calculations
@@ -129,6 +133,11 @@ void setup() {
   APPS_2_high = getDigital(APPS_2_HIGH_);
   APPS_1_low = getDigital(APPS_1_LOW_);
   APPS_2_low = getDigital(APPS_2_LOW_);
+
+  pinMode(4, INPUT);
+  attachInterrupt(digitalPinToInterrupt(4), SDC_ISR, RISING);   // Recieving INT from Mega on MS_COM4
+
+  pinMode(5, OUTPUT);     // Send INT to Mega on MS_COM3
   
   delay(100);            // give the sensor time to set up
  
@@ -187,13 +196,13 @@ void loop() {
       time_at_error = time_now;
     }
   } 
-
+  
   
   // ================== SERIAL COMMS WITH MEGA =============================================================
   // =======================================================================================================
   /*
-  sent_bytes = megaSerial.print("Hello from da Micro");
-  Serial.print("Sent bytes: "); Serial.println(sent_bytes);
+  sent_bytes = megaSerial.print("Hello from da Micro \n");
+  //Serial.print("Sent bytes: "); Serial.println(sent_bytes);
   
   while (megaSerial.available() > 0){
     rec = megaSerial.read();
@@ -201,6 +210,13 @@ void loop() {
   } 
   Serial.println();
 
-  delay(50);
+  while (digitalRead(4) == 0){
+    Serial.println("waiting for MSCOM4 high");
+  }
+  
+  digitalWrite(5,HIGH);     // Send INT to Mega MS_COM3
+  digitalWrite(5,LOW);
   */
+  delay(1000);
+  
 }
