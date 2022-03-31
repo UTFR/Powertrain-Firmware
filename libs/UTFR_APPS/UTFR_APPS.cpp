@@ -38,8 +38,8 @@ void UTFR_APPS::processThrottlePosition()
     #endif
 
     // Normalize pedal position readings and multiply by _kANALOG_MAX so we can compare them
-    _APPS_1_throttle = map_Generic(_APPS_1_in, _APPS_1_low, _APPS_1_high, 0.0, 255.0); 
-    _APPS_2_throttle = map_Generic(_APPS_2_in, _APPS_2_low, _APPS_2_high, 0.0, 255.0);
+    _APPS_1_throttle = map_Generic(_APPS_1_in, _APPS_1_low, _APPS_1_high, 0.0, static_cast<float>(_kANALOG_MAX)); 
+    _APPS_2_throttle = map_Generic(_APPS_2_in, _APPS_2_low, _APPS_2_high, 0.0, static_cast<float>(_kANALOG_MAX));
 
     #ifdef debugMode
     Serial.print("APPS_1_throttle: "); Serial.println(_APPS_1_throttle);
@@ -140,5 +140,5 @@ bool UTFR_APPS::confirmShutdown()
 
 
 float UTFR_APPS::getDigital(float voltage){
-  return round((voltage * _kANALOG_MAX)/10)*2.0;        // did it this way to make it a float again
+  return map_Generic(voltage, 0.0, 5.0, 0.0, static_cast<float>(_kANALOG_MAX));
 }
