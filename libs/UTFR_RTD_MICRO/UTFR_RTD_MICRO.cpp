@@ -43,15 +43,19 @@ bool UTFR_RTD_MICRO::confirmReady(){
 
 bool UTFR_RTD_MICRO::checkThrottle() {
     //int throttle_average = APPS->getThrottle();
-    if (throttle_average != 0) {
+    #ifdef throttleCheck
+    if (throttle_average > kTHROTTLE_THRESHOLD_) {
         return false;
     }
+    #endif
     return true;
 }
 
 bool UTFR_RTD_MICRO::checkBrake() {
+    #ifdef brakeCheck
     if ((analogRead(A2) < kBRAKE_THRESHOLD_)){
         return false;
     }
+    #endif
     return true;
 }

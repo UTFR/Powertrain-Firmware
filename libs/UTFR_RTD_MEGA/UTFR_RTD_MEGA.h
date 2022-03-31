@@ -1,23 +1,18 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-
+#include UTFR_RTD_MEGA_CONFIG.h
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
 //Pins:
-#define RTD_OUT_PIN       = 24
+#define RTD_OUT_PIN       = 24 //Change to real values
 #define IGNITION_OUT_PIN  = 21
 
-//#define debugMode
-
-//#define failBools
-
-
-class UTFR_RTD{
+class UTFR_RTD_MEGA{
     public:
-        UTFR_RTD(); //Constructor
+        UTFR_RTD_MEGA();
         bool confirmReady(bool sdc, bool inv, bool micro, bool cooling);
     private:
 }
