@@ -74,7 +74,7 @@ class UTFR_APPS {
         void sendOutput(void);
         void reportError(void);
         int roundOutput(float value);
-        float getDigital(float voltage);          // gets 10-bit digital representation of a float (voltage) 
+        float getDigital(float voltage);                // gets 10-bit digital representation of voltage
 
 };
 
