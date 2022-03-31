@@ -14,12 +14,14 @@ void UTFR_APPS::begin(int CS){
     // initalize the  data ready and chip select pins:
     pinMode(A0, INPUT);                 // APPS_In_1_Analog pin
     pinMode(A1, INPUT);                 // APPS_In_2_Analog pin
+    pinMode(A2, INPUT);                 // _Brake_in pin
     pinMode(A5, INPUT);                 // APPS_Out_Analog
 
     _APPS_1_high = getDigital(_kAPPS_1_HIGH);
     _APPS_1_low = getDigital(_kAPPS_1_LOW);
     _APPS_2_high = getDigital(_kAPPS_2_HIGH);
     _APPS_2_low = getDigital(_kAPPS_2_LOW);
+    _Brake_threshold = getDigital(_kBRAKE_THRESHOLD);
 
     _DAC_CS = CS;
     DAC.begin(CS);
@@ -49,10 +51,10 @@ void UTFR_APPS::processThrottlePosition()
 
 
     // set flags
-    if (_Brake_in > _kBRAKE_THRESHOLD) // brakes actuated
-    {
-        _brakes_good = (_APPS_out_verify/_kANALOG_MAX < 0.25);
-    }    
+    _brakes_good = ( (_Brake_in > _kBRAKE_THRESHOLD) && 
+                    ((_APPS_out_verify/_kANALOG_MAX > _kBRAKE_DEVIATION) || 
+                    (_APPS_output /_kANALOG_MAX > _kBRAKE_DEVIATION)) 
+                    );
     _throttle_good = GET_DEV(_APPS_1_throttle, _APPS_2_throttle) < _kTHROTTLE_MAX_DEVIATION;
     _output_good = GET_DEV(_APPS_output, _APPS_out_verify) < _kOUTPUT_DEVIATION;
     _error_flag_set = (_time_at_error != _kBASE_TIME);
