@@ -39,6 +39,7 @@ class UTFR_APPS {
 
         const uint8_t _kTIME_ALLOWANCE = 100;           // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
         const float _kTHROTTLE_MAX_DEVIATION = 0.10;    // DO NOT CHANGE: Rule T.4.2.4
+        const float _kBRAKE_THRESHOLD = 2.5;           // (units of V) determine experimentally
         const float _kOUTPUT_DEVIATION = 0.03;          // ** TO DO: Determine **
         const int _kBASE_TIME = -1; 
         const uint8_t _confirm_shutdown_retries = 20;
@@ -49,6 +50,7 @@ class UTFR_APPS {
         float _APPS_2_low = 0.0; 
 
         int _DAC_CS = 7;
+        float _Brake_in = 0;
         float _APPS_1_in = 0;
         float _APPS_2_in = 0;                             // 0 - 1023
         int _APPS_output = 0;
@@ -62,6 +64,7 @@ class UTFR_APPS {
         bool _output_good = false;
         bool _exceed_time_allowance = false;
         bool _error_flag_set = false;
+        bool _brakes_good = false;
 
 
         bool _shutdown = false;

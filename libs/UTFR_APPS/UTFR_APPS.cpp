@@ -31,6 +31,7 @@ void UTFR_APPS::processThrottlePosition()
     // read in the voltage values and convert to digital
     _APPS_1_in = analogRead(A0);
     _APPS_2_in = analogRead(A1);
+    _Brake_in = analogRead(A2);
     _APPS_out_verify = analogRead(A5);
 
     #ifdef debugMode
@@ -48,11 +49,29 @@ void UTFR_APPS::processThrottlePosition()
 
 
     // set flags
+    if (_Brake_in > _kBRAKE_THRESHOLD) // brakes actuated
+    {
+        _brakes_good = (_APPS_out_verify/_kANALOG_MAX < 0.25);
+    }    
     _throttle_good = GET_DEV(_APPS_1_throttle, _APPS_2_throttle) < _kTHROTTLE_MAX_DEVIATION;
     _output_good = GET_DEV(_APPS_output, _APPS_out_verify) < _kOUTPUT_DEVIATION;
     _error_flag_set = (_time_at_error != _kBASE_TIME);
 
     //=========OUTPUT PROCESSING==========//
+
+    // while brakes are bad, output is set to 0
+    if (!_brakes_good) // EV.5.7.1
+    {
+        if (_APPS_out_verify/_kANALOG_MAX > 0.05)   // EV.5.7.2
+        {
+            shutDown();
+            reportError();
+        }
+        else
+        {
+            _brakes_good = true;
+        }
+    }
 
     if (_exceed_time_allowance)
     {
@@ -103,6 +122,8 @@ void UTFR_APPS::reportError()
         Serial.println("[APPS] Error: throttle values not in expected range of each other.");
     else if (!_output_good)
         Serial.println("[APPS] Error: throttle value was output incorrectly.");
+    else if (!_brakes_good)
+        Serial.println("[APPS] Error: brake pedal failed plausibilty check.");
 }
 
 
