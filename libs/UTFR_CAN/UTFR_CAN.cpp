@@ -242,10 +242,60 @@ void UTFR_CAN::printMsgData(CAN_msgNames_E msgName)
     Serial.println(" }");
 }
 
+//Initializes timer and sets the frequency for timerIntterupts
 void UTFR_CAN::setMsgFreq(CAN_msgNames_E msgName, int freq)
 {
     Unsigned long int microSecPerSec = 1000000;
     //Intializing timer
     Timer1.initialize(microSecPerSec/freq); //Sets timer duration 
     Timer1.attachInterrupt(msgSendISR);
+}
+
+void UTFR_CAN::msgSendISR() 
+{
+		//Get data from sensors:
+		long rf0SensorData [4] = {analogRead(HW_PIN_RF_OUT_TIRE_TEMP), analogRead(HW_PIN_RF_CTR_TIRE_TEMP);
+					analogRead(HW_PIN_RF_INR_TIRE_TEMP), analogRead(HW_PIN_RF_ROTOR_TEMP)};
+		long rf1SensorData [3] = {analogRead(HW_PIN_RF_DAMPER_POT), analogRead(HW_PIN_FW_STRAIN_GAUGE_TIP),
+                                           analogRead(HW_PIN_STEERING_ANGLE)};
+		
+		//Store data from RF0 sensors:
+
+		//RF_OUT_TIRE_TEMP
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[0];
+		setField(CAN_MSG_RF0, field, rf0SensorData[0]);
+
+		//RF_CTR_TIRE_TEMP
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[2];
+		setField(CAN_MSG_RF0, field, rf0SensorData[1]);
+
+		//RF_INR_TIRE_TEMP
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[4];
+		setField(CAN_MSG_RF0, field, rf0SensorData[2]);
+
+		//RF_ROTOR_TEMP
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[6];
+		setField(CAN_MSG_RF0, field, rf0SensorData[3]);
+
+ 
+		//Storing Data from RF1 sensors:
+
+		//RF_DAMPER_POT
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF1].msgFields[0];
+		setField(CAN_MSG_RF1, field, rf1SensorData[0]);
+
+		//FW_STRAIN_GAUGE_TIP
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF1].msgFields[2];
+		setField(CAN_MSG_RF1, field, rf1SensorData[1]);
+
+		//STEERING_ANGLE
+		unint8_t field = _CAN_msgArray[CAN_MSG_RF1].msgFields[4];
+		setField(CAN_MSG_RF1, field, rf1SensorData[2]);
+
+
+
+		
+		//Send Sensor data messages
+	        sendMsg(CAN_MSG_RF0);
+	        sendMsg(CAN_MSG_RF1);
 }

@@ -180,28 +180,6 @@ class UTFR_CAN
      *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
      *****************************************************************************/
     private:
-	void msgSendISR() 
-	{
-		//Get data from sensors:
-		long rf0SensorData [4] = {analogRead(HW_PIN_RF_OUT_TIRE_TEMP), analogRead(HW_PIN_RF_CTR_TIRE_TEMP);
-					analogRead(HW_PIN_RF_INR_TIRE_TEMP), analogRead(HW_PIN_RF_ROTOR_TEMP)};
-		long rf1SensorData [3] = {analogRead(HW_PIN_RF_DAMPER_POT), analogRead(HW_PIN_FW_STRAIN_GAUGE_TIP),
-                                           analogRead(HW_PIN_STEERING_ANGLE)};
-		
-		//Store data from RF0 sensors
-		for(int sensorIndex=0; sensorInex<4; sensorIndex++){
-			unint8_t field = _CAN_msgArray[CAN_MSG_RF0].msgFields[sensorIndex*2];
-			setField(CAN_MSG_RF0, field, rf0SensorData[sensorIndex]); 
-		} 
-		//Storing Data from RF1 sensors
-		for(int sensorIndex=0; sensorIndex<3; sensorIndex++){
-                        unint8_t field = _CAN_msgArray[CAN_MSG_RF1].msgFields[sensorIndex*2];
-                        setField(CAN_MSG_RF1, field, rf1SensorData[sensorIndex]);
-                 }
-		
-		//Send Sensor data messages
-	        sendMsg(CAN_MSG_RF0);
-	        sendMsg(CAN_MSG_RF1);
-	};
+	void msgSendISR();
 };
 #endif
