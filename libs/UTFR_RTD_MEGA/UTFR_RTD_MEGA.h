@@ -11,10 +11,10 @@
 #define _UTFR_RTD_MEGA_H_
 
 //Pins:
-#define RTD_IN_PIN          24 //TODO - change to real values
-#define RTD_OUT_PIN         23
-#define IGNITION_IN_PIN     22
-#define IGNITION_OUT_PIN    21
+#define RTD_IN_PIN          25 
+#define RTD_OUT_PIN         24
+#define IGNITION_IN_PIN     21
+#define IGNITION_OUT_PIN    38
 
 class UTFR_RTD_MEGA
 {
