@@ -14,26 +14,26 @@
 
 //Pins:
 //===Pressure===
-#define MOT_PRESS_IN_PIN = A10 //Check pinout
-#define MOT_PRESS_OUT_PIN = A9 
+#define MOT_IN_PRESS_PIN A10 //Check pinout
+#define MOT_OUT_PRESS_PIN A9 
 
-#define INV_PRESS_IN_PIN = A6
-#define INV_PRESS_OUT_PIN = A7
+#define INV_IN_PRESS_PIN A6
+#define INV_OUT_PRESS_PIN A7
 
 //===Temperature===
-#define MOT_TEMP_IN_PIN = A8
-#define MOT_TEMP_OUT_PIN = A11
+#define MOT_IN_TEMP_PIN A8
+#define MOT_OUT_TEMP_PIN A11
 
-#define INV_TEMP_IN_PIN = A4
-#define INV_TEMP_OUT_PIN = A5
+#define INV_IN_TEMP_PIN A4
+#define INV_OUT_TEMP_PIN A5
 
 //===Flow===
-#define INV_FLOW_IN_PIN = A2
-#define MOT_FLOW_IN_PIN = A3
+#define INV_IN_FLOW_PIN A2
+#define MOT_IN_FLOW_PIN A3
 
 //===MISC===
-#define MOT_PUMP_PIN = 8
-#define INV_PUMP_PIN = 9
+#define MOT_PUMP_PIN 8
+#define INV_PUMP_PIN 9
 
 //#define debugMode
 
