@@ -30,5 +30,5 @@ X map_Generic(X x, M in_min, N in_max, O out_min, Q out_max){
 }
 
 
-#endif // LIB_UTIL_H
+#endif /* LIB_UTIL_H
 
