@@ -10,9 +10,9 @@
  * 
  * 
  */
-#include "UTFR_RTD_MEGA"
+#include "UTFR_RTD_MEGA.h"
 
-UTFR_RTD_MEGA RTD
+UTFR_RTD_MEGA RTD();
 
 int fake_startup_counter = 0;
 bool cooling = false;
