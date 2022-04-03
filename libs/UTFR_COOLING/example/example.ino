@@ -1,10 +1,10 @@
 /**
  * @file example.ino
  * @author Kelvin Cui
- * @brief UTFR_ERROR sample implementation - shows required setup, and sends a sample_error over CAN to the datalogger.
+ * @brief UTFR_COOLING sample implementation - shows how to check pressures, temps and flow.
  *      
  * @version 1.0
- * @date 2022-02-16
+ * @date 2022-04-03
  * 
  * @copyright University of Toronto Formula Racing 
  * 
