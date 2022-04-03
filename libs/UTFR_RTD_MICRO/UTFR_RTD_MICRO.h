@@ -9,25 +9,26 @@
  *                               D E F I N E S                                *
  *****************************************************************************/
 //Pins:
-#define MEGA_OUT_PIN        24
-#define BRAKE_IN_PIN        20          // Change to real values
-#define THROTTLE_IN_PIN     19          // 
+#define MEGA_OUT_PIN        6
+#define BRAKE_IN_PIN        A2             
 
 class UTFR_RTD_MICRO{
     public:
         UTFR_RTD_MICRO();
 
         /*! Check Throttle & Brake
+         *  @param[in] throttle position from APPS
          *  @returns True if throttle and brake are ready for RTD for
          *           for more than kCHECK_COUNTER_ loops.
          */
-        bool confirmReady();
+        bool confirmReady(int throttle);
     private:
-        /*! Check Throttle Input using APPS library
+        /*! Check Throttle Input 
+         *  @param[in] throttle position
          *  @returns True if throttle is below kTHROTTLE_THRESHOLD_, 
          *           false otherwise
          */
-        bool checkThrottle();
+        bool checkThrottle(int throttle);
 
         /*! Check Brake Input 
          *  @returns True if Brake is above kBRAKE_THRESHOLD_, 

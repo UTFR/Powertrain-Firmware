@@ -101,6 +101,11 @@ void UTFR_APPS::processThrottlePosition()
     }
 }
 
+int UTFR_APPS::getThrottlePosition()
+{
+    return _APPS_output;
+}
+
 
 void UTFR_APPS::sendOutput()
 {

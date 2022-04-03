@@ -11,17 +11,28 @@
  * 
  */
 #include "UTFR_RTD_MICRO.h"
+#include "UTFR_APPS.h"
 
 UTFR_RTD_MICRO RTD;
+UTFR_APPS APPS;
+
+int throttle = 0;
+
+const int DAC_CS = 7;      // DAC CS pin
  
 void setup() {
   Serial.begin(9600);
+  APPS.begin(DAC_CS);
 }
 
 void loop() {
-    while (!RTD.confirmReady()){
-        //check bools again
-        delay(500);
-    }
-    Serial.println("RTD Ready!");
+  APPS.processThrottlePosition();
+  int throttle = APPS.getThrottlePosition();
+  while (!RTD.confirmReady(throttle)){
+      //check bools again
+      delay(500);
+      APPS.processThrottlePosition();
+      throttle = APPS.getThrottlePosition();
+  }
+  Serial.println("RTD Ready!");
 }

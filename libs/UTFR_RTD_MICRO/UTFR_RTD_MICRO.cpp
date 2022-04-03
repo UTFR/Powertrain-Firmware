@@ -5,18 +5,17 @@ UTFR_RTD_MICRO::UTFR_RTD_MICRO()
     // Initialize Pins
     pinMode(MEGA_OUT_PIN, OUTPUT);
     pinMode(BRAKE_IN_PIN, INPUT);
-    pinMode(THROTTLE_IN_PIN, INPUT);
 
     #ifdef debugMode
     Serial.println("RTD instantiated correctly on micro.");
     #endif
 }
 
-bool UTFR_RTD_MICRO::confirmReady(){
+bool UTFR_RTD_MICRO::confirmReady(int throttle){
 
     int check_counter = 0;
     while (check_counter < kCHECK_COUNTER_) {
-        if (!this->checkThrottle()) {
+        if (!this->checkThrottle(throttle)) {
             #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Throttle Invalid, returning False");
             #endif
@@ -41,10 +40,9 @@ bool UTFR_RTD_MICRO::confirmReady(){
     return true;
 }
 
-bool UTFR_RTD_MICRO::checkThrottle() {
-    //int throttle_average = APPS->getThrottle();
+bool UTFR_RTD_MICRO::checkThrottle(int throttle) {
     #ifdef throttleCheck
-    if (throttle_average > kTHROTTLE_THRESHOLD_) {
+    if (throttle > kTHROTTLE_THRESHOLD_) {
         return false;
     }
     #endif
