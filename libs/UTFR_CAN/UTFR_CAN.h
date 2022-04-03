@@ -34,15 +34,24 @@
 #define FW_STRAIN_TIP_F     2
 #define STEER_ANG_F         3
 
+// ER0 - Error CAN Message 0
+#define ER_BMS_OVERTEMP_F   1
+#define ER_BMS_OVERVOLT_F   2
+#define ER_BMS_UNDERVOLT_F  3
+
+// ER1 - Error CAN Message 1
+#define ER_APPS_MISMATCH    1
+#define ER_SDC_TRIPPED      2
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
-{                                           
-    CAN_MSG_RF0,  
-    CAN_MSG_RF1,
+        {                                           
+            CAN_MSG_RF0,  
+            CAN_MSG_RF1,
+            CAN_MSG_ER0,
+            CAN_MSG_ER1,
 
-    CAN_MSG_COUNT
-};
-
+            CAN_MSG_COUNT
+        };
 
 // ----------------------------------------------------------------------------------------------------->>
 
@@ -115,7 +124,33 @@ class UTFR_CAN
                 .isTx = true,
                 .isRx = false,
                 .isDirty = false,
-            }
+            },
+            [CAN_MSG_ER0] = 
+            {
+                .msgID = 0x1B2, //TBD
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
+                              ER_BMS_UNDERVOLT_F, UNUSED_F,
+                              UNUSED_F,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
+            [CAN_MSG_ER1] = 
+            {
+                .msgID = 0x1B3, //TBD
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {ER_APPS_MISMATCH,  ER_SDC_TRIPPED, 
+                              UNUSED_F,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
         };
 
 
