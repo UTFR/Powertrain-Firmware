@@ -1,11 +1,7 @@
 /* This library contains helpful APIs and data structures
  * to improve the CAN user experience.
  *
-<<<<<<< HEAD
- * Contributors: Spencer Ball, Nivetha Sathish 2022
-=======
- * Contributors: Spencer Ball, 2022
->>>>>>> main
+ * Contributors: Spencer Ball, Nivetha Sathish, Youssef Elhadad 2022
  *
  * University of Toronto Formula Racing
  */
