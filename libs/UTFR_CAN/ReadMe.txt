@@ -1,7 +1,11 @@
 /* This library contains helpful APIs and data structures
  * to improve the CAN user experience.
  *
+<<<<<<< HEAD
+ * Contributors: Spencer Ball, Nivetha Sathish 2022
+=======
  * Contributors: Spencer Ball, 2022
+>>>>>>> main
  *
  * University of Toronto Formula Racing
  */
@@ -24,10 +28,15 @@
 
   --> CTRL+F replace all "UTFR_CAN" with "UTFR_CAN_VERSIONNAME"
 
+  --> msgSendISR functions (there's 2 of them) This is a hard coded function. Nothing fancy.
+
  
 [In UTFR_CAN_versionName.h]
 
   --> CTRL+F replace all "UTFR_CAN" with "UTFR_CAN_VERSIONNAME"
+
+  --> Comment out " #define _2_NODES_ " if this MCU is responsible for only one CAN node
+  --> Comment out " #define _1_NODE_ " if this MCU is responsible for two CAN nodes
 
   --> Message field definitions       (in #defines at top of file)
   --> CAN_msgNames_E enumeration      (directly below #defines, above class)

@@ -1,3 +1,7 @@
+/************************
+ * Only works if #define _1_NODE_ is uncommented in UTFR_CAN.h
+ *************************/
+
 #include "UTFR_CAN.h"
 
 #define HW_PIN_CS_TEST 10           // Change to proper CS pin
