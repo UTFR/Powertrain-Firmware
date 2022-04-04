@@ -1,7 +1,7 @@
 # Powertrain-Firmware
 
 ## Required Additional Arduino Libraries:
-- "ArduinoSTL" by Mike Matera, *V1.3.3*
+- "ArduinoSTL" by Mike Matera, *V1.3.3* (comment out '#define ARDUINOSTL_DEFAULT_CIN_COUT' in ArudinoSTL.cpp to reduce size)
 - "CAN-BUS Shield" by Seeed Studio, *V1.0.0*
 - "MCP_DAC" by Rob Tillaart, *V0.1.6*
 
