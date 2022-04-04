@@ -15,17 +15,7 @@
 //#define debugMode                         // Uncomment this line to enable debug prints
 
 
-// ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
-// ----------------------------------------------------------------------------------------------------->>
-
-#define UNUSED_F 0                           // Define your message data fields here so you can access them by name later
-
-// RF0 - Right Front corner module CAN message 0
-#define RF_OUT_TIRE_TEMP_F  1               // 1st field
-#define RF_CTR_TIRE_TEMP_F  2               // 2nd field
-#define RF_INR_TIRE_TEMP_F  3               // etc...
-#define RF_ROTOR_TEMP_F     4
-//Ports for RF0 sensors
+//Ports for RF0 sensors                     // TO DO: REMOVE THIS WHEN PIN DRIVER ADDED
 #define HW_PIN_RF_OUT_TIRE_TEMP  A0
 #define HW_PIN_RF_CTR_TIRE_TEMP  A1
 #define HW_PIN_RF_INR_TIRE_TEMP  A2
@@ -36,19 +26,30 @@
 #define HW_PIN_STEERING_ANGLE  A6
 
 
+// ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
+// ----------------------------------------------------------------------------------------------------->>
+
+#define UNUSED_F 0                           // Define your message data fields here so you can access them by name later
+
+// RF0 - Right Front corner module CAN message 0
+#define RF_OUT_TIRE_TEMP_F  1               // 1st field
+#define RF_CTR_TIRE_TEMP_F  2               // 2nd field
+#define RF_INR_TIRE_TEMP_F  3               // etc...
+#define RF_ROTOR_TEMP_F     4
+
 // RF1 - Right Front corner module CAN message 1
 #define RF_DAMP_POT_F       1
 #define FW_STRAIN_TIP_F     2
 #define STEER_ANG_F         3
 
 
-enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
-        {                                           
-            CAN_MSG_RF0,  
-            CAN_MSG_RF1,
+enum CAN_msgNames_E                         // Define all CAN message names here so you can access them by name later                                    
+{                                           
+    CAN_MSG_RF0,  
+    CAN_MSG_RF1,
 
-            CAN_MSG_COUNT
-        };
+    CAN_MSG_COUNT
+};
 
 // ----------------------------------------------------------------------------------------------------->>
 
@@ -66,11 +67,11 @@ class UTFR_CAN
         struct CAN_msg_S                            // Don't change this. Structure of a single CAN message.
         {                      
             const unsigned long msgID;              // 11-bit identifier for normal format, 29-bit identifier for extended format
-            volatile uint8_t msgData[8];            // 8-byte data payload
+            volatile uint8_t msgData[8];            // 8-byte data payload. Volatile because can be changed in ISR.
             const uint8_t msgFields[8];             // What is each byte of the payload? --> Use defined field names at top of file
             const bool isTx;                        // true if message is transmitted
             const bool isRx;                        // true if message is received
-            volatile bool isDirty;                    // true if new data received since last read
+            volatile bool isDirty;                  // true if new data received since last read
         };
 
         enum CAN_filter_E                           // Don't change this. It's the same for all mcp2515 nodes.
@@ -92,7 +93,7 @@ class UTFR_CAN
         // ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
         // ----------------------------------------------------------------------------------------------------->>
 
-        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =                        // Initialize CAN message array   
+        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =               // Initialize CAN message array   
         {
             [CAN_MSG_RF0] = 
             {
@@ -152,6 +153,8 @@ class UTFR_CAN
 
         // ----------------------------------------------------------------------------------------------------->>
 
+        bool _sendMsgNow = false;
+
 
     /******************************************************************************
     *          P U B L I C   F U N C T I O N   D E C L A R A T I O N S            *
@@ -166,20 +169,26 @@ class UTFR_CAN
         unsigned long getField(CAN_msgNames_E msgName, uint8_t fieldName);          // Get data from field by name (defined at top of this file)
         void setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData);   // Set field data by name, pass in data you want to set as well
 
-        void setFilters(void);                                              // set masks and filters according to CAN_filterArray
-        void setFilters_permitAll(void);                                    // set masks and filters to receive ALL messages sent by other nodes
-        void setFilters_permitNone(void);                                   // set masks and filters to receive NO messages sent by other nodes
+        void setFilters(void);                      // set masks and filters according to CAN_filterArray
+        void setFilters_permitAll(void);            // set masks and filters to receive ALL messages sent by other nodes
+        void setFilters_permitNone(void);           // set masks and filters to receive NO messages sent by other nodes
 
-        void printMsgData(CAN_msgNames_E msgName);                          // Prints all data stored in a given message (Note: will be in decimal format)
+        void printMsgData(CAN_msgNames_E msgName);  // Prints all data stored in a given message (Note: will be in decimal format)
 
-        // TO DO: Functions that return void should return error_types defined in an enum. Makes debug easier.
-            // Done by Kelvin in UTFR_ERROR.h ?
+        void readSensors(void);                     // Read all sensors this MCU is responsible for
+	    void setMsgFreq(int freq);                  // Sets frequency to send messages at
+                                                    // Note: Choose a freq that evenly divides into lower frequencies
+                                                    // Example good choice: 60Hz, can choose to send other messages at 40Hz, 20Hz, 10Hz, etc.
+                                                    // via if statements in msgSendISR
 
-	void setMsgFreq(CAN_msgNames_E msgName, int freq);
     /******************************************************************************
-     *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
-     *****************************************************************************/
+    *          P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
+    ******************************************************************************/
     private:
-	void msgSendISR();
+
+        friend void msgSendISR(UTFR_CAN& node);     // Sends messages when interrupt raised by HW timer 1
+                                                    // Must be a friend because ISRs cannot be members of class
+                                                    // They must have an ordinary function pointer (something about compiling idk)
 };
+
 #endif
