@@ -1,7 +1,7 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-
+#include <Arduino.h>
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
@@ -12,17 +12,18 @@
 
 class UTFR_MEGA_SHUTDOWN
 {
-public:
-    UTFR_MEGA_SHUTDOWN(); // Constructor
-    void checkShutdown(); // starts the shutdown process
-
 private:
     const int kRETRY_INTERVAL = 20;
     unsigned long current_time, start_time = 0;
 
     bool SDC_TRIPPED = false;
     int checkState = 0;
-}
+
+public:
+    UTFR_MEGA_SHUTDOWN(); // Constructor
+    void begin();         // Declares the pin aad interupt
+    void checkShutdown(); // starts the shutdown process
+};
 
 /******************************************************************************
  *                              T Y P E D E F S                               *

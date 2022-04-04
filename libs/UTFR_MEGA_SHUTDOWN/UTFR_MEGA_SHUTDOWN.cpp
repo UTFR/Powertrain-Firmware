@@ -1,13 +1,17 @@
-UTFR_MEGA_SHUTDOWN::UTFR_MEGA_SHUTDOWN()
-{
-  pinMode(HW_PIN_MSCOM1, OUTPUT);
+#include "UTFR_MEGA_SHUTDOWN.h"
 
+void UTFR_MEGA_SHUTDOWN::UTFR_MEGA_SHUTDOWN(){}; // Constructor
+
+void UTFR_MEGA_SHUTDOWN::begin()
+{
+
+  pinMode(HW_PIN_MSCOM1, OUTPUT);
   pinMode(HW_PIN_MSCOM2, INPUT);
   pinMode(HW_PIN_MSCOM3, INPUT);
   attachInterrupt(digitalPinToInterrupt(19), SDC_ISR, RISING);
 }
 
-void UTFR_MEGA_SHUTDOWN::startShutdown()
+void UTFR_MEGA_SHUTDOWN::checkShutdown()
 {
 
   if (SDC_TRIPPED == true)
