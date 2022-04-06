@@ -15,7 +15,7 @@ class UTFR_APPS {
         UTFR_APPS(uint8_t dataOut = 255, uint8_t clock = 255);
         void begin(int CS);
         void processThrottlePosition();
-        void shutDown();
+        void shutdown();
         bool getShutdownState();                // returns true if shutdown() function has been called        
         bool confirmShutdown();                 // returns true if output of DAC is 0
 
@@ -31,19 +31,19 @@ class UTFR_APPS {
                                                             
                                                         // Therefore, Composition is advantageous over inheritance for safety and performance reasons
 
-        const int _kANALOG_MAX = 1023;
-        const float _kAPPS_1_HIGH = 4.75;     
-        const float _kAPPS_2_HIGH = 4.75;      
-        const float _kAPPS_1_LOW = 1.25;       
-        const float _kAPPS_2_LOW = 1.25;      
+        int _kANALOG_MAX = 1023;
+        float _kAPPS_1_HIGH = 4.75;     
+        float _kAPPS_2_HIGH = 4.75;      
+        float _kAPPS_1_LOW = 1.25;       
+        float _kAPPS_2_LOW = 1.25;      
 
-        const uint8_t _kTIME_ALLOWANCE = 100;           // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
-        const float _kTHROTTLE_MAX_DEVIATION = 0.10;    // DO NOT CHANGE: Rule T.4.2.4
-        const float _kBRAKE_THRESHOLD = 2.5;           // (units of V) determine experimentally
-        const float _kBRAKE_DEVIATION = 0.25;          // DO NOT CHANGE: Rule EV.5.7.1
-        const float _kOUTPUT_DEVIATION = 0.03;          // ** TO DO: Determine **
-        const int _kBASE_TIME = -1; 
-        const uint8_t _confirm_shutdown_retries = 20;
+        uint8_t _kTIME_ALLOWANCE = 100;           // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
+        float _kTHROTTLE_MAX_DEVIATION = 0.10;    // DO NOT CHANGE: Rule T.4.2.4
+        float _kBRAKE_THRESHOLD = 2.5;            // (units of V) determine experimentally
+        float _kBRAKE_DEVIATION = 0.25;           // DO NOT CHANGE: Rule EV.5.7.1
+        float _kOUTPUT_DEVIATION = 0.03;          // ** TO DO: Determine **
+        int _kBASE_TIME = -1; 
+        uint8_t _confirm_shutdown_retries = 20;   // Tweak this as needed
 
         float _APPS_1_high = 0.0;            // These will be the digital conversions of the constant voltage values above        
         float _APPS_2_high = 0.0;            // Used to calculate APPS_output

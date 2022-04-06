@@ -8,43 +8,33 @@
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-#define HW_PIN_MSCOM3 6
+#ifndef _UTFR_MICRO_SHUTDOWN_H_
+#define _UTFR_MICRO_SHUTDOWN_H_
 
-class UTFR_MIRCO_SHUTDOWN
-{
-public:
-    UTFR_MIRCO_SHUTDOWN(); // Constructor
-    void checkShutdown();  // starts the shutdown process
+#define HW_PIN_MSCOM1 2         // Call SDC_ISR() when this pin set high by Mega
+#define HW_PIN_MSCOM3 6         // Set this pin high when zero torque commanded successfully
 
-private:
-    MCP4911 DAC; // Digital-to-Analog converter -> this sends drive signals to the inverter which, in turn, powers the motor.
 
-    const int kCS_DAC = 8;
-    const int HW_PIN_MSCOM1 = 2;
+class UTFR_MICRO_SHUTDOWN
+{   
+    private:
 
-    bool SDC_TRIPPED = false; // if this is true, do nothing until 0 torque to inverter
+        UTFR_APPS _APPS = NULL;
 
-    bool written = false;
-    int readback = -1;
-    int kREADBACK_DELAY = 10;
+        const int _kREADBACK_DELAY = 50;        // MAY NEED ADJUSTMENT: MICROseconds between sending 0 torque and reading back output
+        const unsigned long _kTIMEOUT = 150;    // MAY NEED ADJUSTMENT: MILLIseconds before returing to normal functionality if failure        
+
+        int _readback = -1;
+
+        void checkZeroTorqueOut(void);                  // Confirms DAC is commanding zero torque to inverter  
+        void carOff(void);                              // Car is off, loop doing nothing
+        friend void SDC_ISR(UTFR_MICRO_SHUTDOWN &SELF); // Called when MSCOM1 goes high (Mega wants Micro to shutdown) 
+
+    public:
+        
+        UTFR_MICRO_SHUTDOWN(UTFR_APPS& APPS);           // Constructor
+        
 };
 
-/******************************************************************************
- *                              T Y P E D E F S                               *
- *****************************************************************************/
 
-/******************************************************************************
- *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
- *****************************************************************************/
-
-/******************************************************************************
- *              P R I V A T E   D A T A   D E F I N I T I O N S               *
- *****************************************************************************/
-
-/******************************************************************************
- *                     P R I V A T E   F U N C T I O N S                      *
- *****************************************************************************/
-
-/******************************************************************************
- *                      P U B L I C   F U N C T I O N S                       *
- *****************************************************************************/
+#endif

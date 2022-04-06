@@ -66,7 +66,7 @@ void UTFR_APPS::processThrottlePosition()
     {
         if (_APPS_out_verify/_kANALOG_MAX > 0.05)   // EV.5.7.2
         {
-            shutDown();
+            shutdown();
             reportError();
         }
         else
@@ -77,7 +77,7 @@ void UTFR_APPS::processThrottlePosition()
 
     if (_exceed_time_allowance)
     {
-        shutDown();
+        shutdown();
         reportError();
     }
     else
@@ -129,7 +129,7 @@ void UTFR_APPS::reportError()
 }
 
 
-void UTFR_APPS::shutDown()
+void UTFR_APPS::shutdown()
 {
     DAC.analogWrite(0, 0);          // Command zero throttle to inverter
     _shutdown = true;

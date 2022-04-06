@@ -2,7 +2,7 @@
 
 UTFR_APPS APPS;
 const int DAC_CS = 7;      // DAC CS pin
-    
+
 void setup()
 {
   // put your setup code here, to run once:

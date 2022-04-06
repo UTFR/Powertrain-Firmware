@@ -1,6 +1,17 @@
 #include "UTFR_MEGA_SHUTDOWN.h"
 
-void UTFR_MEGA_SHUTDOWN::UTFR_MEGA_SHUTDOWN()   // Constructor
+
+// Called when SDC_FAULT interrupt pin goes high
+void SDC_ISR(UTFR_MEGA_SHUTDOWN &SELF)
+{
+  SELF._start_time = millis();
+  digitalWrite(HW_PIN_MSCOM1, HIGH);              // Start interrupt on Micro
+  SELF.checkZeroTorqueOut();
+}
+
+
+// Constructor
+UTFR_MEGA_SHUTDOWN::UTFR_MEGA_SHUTDOWN()
 {
   pinMode(HW_PIN_MSCOM1, OUTPUT);               // Start interrupt on Micro with this pin
   digitalWrite(HW_PIN_MSCOM1, LOW);
@@ -47,18 +58,9 @@ void UTFR_MEGA_SHUTDOWN::carOff()
   while (1)
   {
     //ERROR.sendErr(carOff);                      // Kelvin's error library
-    #ifdef debug_RCMega
-    Serial.print("Car off. \n";)
+    #ifdef debug_MegaShutdown
+    Serial.print("Car off. \n");
     #endif
-    delay(1000);
+    delay(1000);                                  // TO DO: Re-enter RTD loop if certain input given (ignition button?)
   }
-}
-
-
-// Called when SDC_FAULT interrupt pin goes high
-void UTFR_MEGA_SHUTDOWN::SDC_ISR()
-{
-  _start_time = millis();
-  digitalWrite(HW_PIN_MSCOM1, HIGH);              // Start interrupt on Micro
-  checkZeroTorqueOut();
 }

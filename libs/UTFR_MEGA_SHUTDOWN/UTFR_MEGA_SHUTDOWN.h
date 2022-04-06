@@ -7,6 +7,12 @@
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
+#ifndef _UTFR_MEGA_SHUTDOWN_H_
+#define _UTFR_MEGA_SHUTDOWN_H_
+
+#define debug_MegaShutdown                          // Uncomment this line for debug prints
+
+// ----- Pin Definitions -----
 #define HW_PIN_MSCOM1 40
 #define HW_PIN_MSCOM3 20
 
@@ -29,10 +35,16 @@ class UTFR_MEGA_SHUTDOWN
         unsigned long _current_time = 0;
         volatile unsigned long _start_time = 0;          
 
+        void checkZeroTorqueOut(void);  // Checks if Micro has successfully sent 0 torque to inverter. Calls carOff() if yes or if timeout.
+        void carOff(void);              // Tells inverter to shut down, disconnects low side LV battery.
+
+        friend void SDC_ISR(UTFR_MEGA_SHUTDOWN& SELF);      // Starts shutdown sequence from Mega.
+                                                            // Must be a friend because ISRs cannot be members of class
+                                                            // They must have an ordinary function pointer (something about compiling idk)
+
     public:
 
         UTFR_MEGA_SHUTDOWN();           // Constructor
-        void checkZeroTorqueOut(void);  // Checks if Micro has successfully sent 0 torque to inverter. Calls carOff() if yes or if timeout.
-        void carOff(void);              // Tells inverter to shut down, disconnects low side LV battery.
-        void SDC_ISR(void);             // Starts shutdown sequence from Mega.
 };
+
+#endif
