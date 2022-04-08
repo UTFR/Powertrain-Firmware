@@ -7,7 +7,7 @@ UTFR_COMMS_MEGA::UTFR_COMMS_MEGA()
 }
 
 
-void UTFR_COMMS_MEGA::receiveSerialMicro(UTFR_CAN &CAN)
+void UTFR_COMMS_MEGA::receiveSerialMicro(UTFR_CAN_RC &CAN)
 {
     if(Serial3.available() > 0)                       // Receive serial msg from Micro
     {               
@@ -21,16 +21,16 @@ void UTFR_COMMS_MEGA::receiveSerialMicro(UTFR_CAN &CAN)
     if (_rx_msg[0] == COMMS_MSG_LOGDATA)
     {
         int fieldData = (_rx_msg[1] << 8) | _rx_msg[2];     // Throttle position: first 2 bytes after msg ID
-        CAN.setField(THROTTLE_POS_F, fieldData);
+        CAN.setField(CAN_MSG_MICRO, THROTTLE_POS_F, fieldData);
 
         fieldData = (_rx_msg[3] << 8) | _rx_msg[4];         // Brake pressure
-        CAN.setField(BRAKE_PRESS_F, fieldData);
+        CAN.setField(CAN_MSG_MICRO, BRAKE_PRESS_F, fieldData);
 
         fieldData = (_rx_msg[5] << 8) | _rx_msg[6];         // Front Left wheel speed
-        CAN.setField(WHLSPD_FL_F, fieldData);
+        CAN.setField(CAN_MSG_MICRO, WHLSPD_FL_F, fieldData);
         
         fieldData = (_rx_msg[7] << 8) | _rx_msg[8];         // Front Right wheel speed
-        CAN.setField(WHLSPD_FR_F, fieldData); 
+        CAN.setField(CAN_MSG_MICRO, WHLSPD_FR_F, fieldData); 
     }
 }
 

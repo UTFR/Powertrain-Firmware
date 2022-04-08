@@ -1,8 +1,9 @@
-#include "UTFR_CAN.h"
+#include "UTFR_CAN_RC.h"
 
 #ifndef _UTFR_COMMS_MEGA_H_
 #define _UTFR_COMMS_MEGA_H_
 
+#define debug_CommsMega                             // Uncomment this line for debug prints
 
 class UTFR_COMMS_MEGA
 {
@@ -19,8 +20,8 @@ class UTFR_COMMS_MEGA
 
     public:
 
-        UTFR_COMMS_MEGA();                            // Constructor
-        void receiveSerialMicro(UTFR_CAN &CAN);       // Receives messages on Serial3 port from micro. Stores data when required.
+        UTFR_COMMS_MEGA();                          // Constructor
+        void receiveSerialMicro(UTFR_CAN_RC &CAN);     // Receives messages on Serial3 port from micro. Stores data when required.
 };
 
 

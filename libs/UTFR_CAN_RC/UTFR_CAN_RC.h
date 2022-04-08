@@ -1,8 +1,9 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-#include "ArduinoSTL.h"       
-#include "mcp_can.h"
+#include "ArduinoSTL.h"
+#include "mcp_can.h"       
+
 
 /******************************************************************************
  *                              D E F I N E S                                 *
@@ -17,7 +18,7 @@
 // ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
 // ----------------------------------------------------------------------------------------------------->>
 
-#define _1_NODE_                            // Comment out for MCU that uses two nodes
+//#define _1_NODE_                            // Comment out for MCU that uses two nodes
 #define _2_NODES_                         // Comment out for MCU that uses only one node
 
 #define UNUSED_F 0                          // Define your message data fields here so you can access them by name later
@@ -34,12 +35,12 @@
 #define WHLSPD_FR_F     4
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
-        {                                           
-          
-            CAN_MSG_ER0,
-            CAN_MSG_MICRO,
-            CAN_MSG_COUNT
-        };
+{                                          
+    CAN_MSG_ER0,
+    CAN_MSG_MICRO,
+    
+    CAN_MSG_COUNT
+};
 
 // ----------------------------------------------------------------------------------------------------->>
 
