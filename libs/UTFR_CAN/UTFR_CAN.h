@@ -15,11 +15,22 @@
 //#define debugMode                         // Uncomment this line to enable debug prints
 
 
+//Ports for RF0 sensors                     // TO DO: REMOVE THIS WHEN PIN DRIVER ADDED
+#define HW_PIN_RF_OUT_TIRE_TEMP  A0
+#define HW_PIN_RF_CTR_TIRE_TEMP  A1
+#define HW_PIN_RF_INR_TIRE_TEMP  A2
+#define HW_PIN_RF_ROTOR_TEMP A3
+//Ports for RF1 Sensors
+#define HW_PIN_RF_DAMPER_POT  A4
+#define HW_PIN_FW_STRAIN_GAUGE_TIP A5
+#define HW_PIN_STEERING_ANGLE  A6
+
+
 // ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
 // ----------------------------------------------------------------------------------------------------->>
 
-//#define _1_NODE_                            // Comment out for MCU that uses two nodes
-#define _2_NODES_                         // Comment out for MCU that uses only one node
+#define _1_NODE_                            // Comment out for MCU that uses two nodes
+//#define _2_NODES_                           // Comment out for MCU that uses only one node
 
 #define UNUSED_F 0                          // Define your message data fields here so you can access them by name later
 
@@ -51,8 +62,8 @@ enum CAN_msgNames_E                          // Define all CAN message names her
             CAN_MSG_RF0,  
             CAN_MSG_RF1,
 
-            CAN_MSG_COUNT
-        };
+    CAN_MSG_COUNT
+};
 
 // ----------------------------------------------------------------------------------------------------->>
 
@@ -72,11 +83,11 @@ class UTFR_CAN
         struct CAN_msg_S                            // Don't change this. Structure of a single CAN message.
         {                      
             const unsigned long msgID;              // 11-bit identifier for normal format, 29-bit identifier for extended format
-            volatile uint8_t msgData[8];            // 8-byte data payload
+            volatile uint8_t msgData[8];            // 8-byte data payload. Volatile because can be changed in ISR.
             const uint8_t msgFields[8];             // What is each byte of the payload? --> Use defined field names at top of file
             const bool isTx;                        // true if message is transmitted
             const bool isRx;                        // true if message is received
-            volatile bool isDirty;                    // true if new data received since last read
+            bool isDirty;                           // true when message in array contains new, un-read data
         };
 
         enum CAN_filter_E                           // Don't change this. It's the same for all mcp2515 nodes.
@@ -155,7 +166,7 @@ class UTFR_CAN
         };
 
 
-        unsigned long _CAN_filterArray[CAN_MASK_FILTER_COUNT] =         // Define the filters you want to apply to incoming messages here
+        uint16_t _CAN_filterArray[CAN_MASK_FILTER_COUNT] =         // Define the filters you want to apply to incoming messages here
         {
             [CAN_MASK_0] = 0b00000000000,               // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
             [CAN_MASK_1] = 0b00000000000,               // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
@@ -183,6 +194,8 @@ class UTFR_CAN
 
 
         // ----------------------------------------------------------------------------------------------------->>
+
+        bool _sendMsgNow = false;
 
 
     /******************************************************************************
@@ -215,16 +228,24 @@ class UTFR_CAN
 
         unsigned long getField(CAN_msgNames_E msgName, uint8_t fieldName);          // Get data from field by name (defined at top of this file)
         void setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData);   // Set field data by name, pass in data you want to set as well
-        void printMsgData(CAN_msgNames_E msgName);                                  // Prints all data stored in a given message (Note: will be in decimal format)
 
-        // TO DO: Functions that return void should return error_types defined in an enum. Makes debug easier.
-            // Done by Kelvin in UTFR_ERROR.h ?
+        void printMsgData(CAN_msgNames_E msgName);  // Prints all data stored in a given message (Note: will be in decimal format)
 
+        void readSensors(void);                     // Read all sensors this MCU is responsible for
+	    void setMsgFreq(int freq);                  // Sets frequency to send messages at
+                                                    // Note: Choose a freq that evenly divides into lower frequencies
+                                                    // Example good choice: 60Hz, can choose to send other messages at 40Hz, 20Hz, 10Hz, etc.
+                                                    // via if statements in msgSendISR
 
     /******************************************************************************
-     *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
-     *****************************************************************************/
+    *          P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
+    ******************************************************************************/
     private:
+
+        friend void msgSendISR(UTFR_CAN& SELF);     // Sends messages when interrupt raised by HW timer 1
+                                                    // Must be a friend because ISRs cannot be members of class
+                                                    // They must have an ordinary function pointer (something about compiling idk)
+                                                    
         void receiveMsgsCommonFcn(unsigned long canID, uint8_t dataLength, uint8_t buf[8]); // parts of receiveMsgs common to all nodes
 };
 
