@@ -2,14 +2,14 @@
  *                              I N C L U D E S                               *
  *****************************************************************************/
 #include "ArduinoSTL.h"       
-
+#include "mcp_can.h"
 
 /******************************************************************************
  *                              D E F I N E S                                 *
  *****************************************************************************/
 
 #ifndef _UTFR_CAN_RC_H_
-#define _UTFR_CAN__RC_H_
+#define _UTFR_CAN_RC_H_
 
 //#define debugMode                         // Uncomment this line to enable debug prints
 
