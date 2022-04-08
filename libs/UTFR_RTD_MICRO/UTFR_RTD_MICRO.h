@@ -7,9 +7,13 @@
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
+
+#ifndef _UTFR_RTD_MICRO_H_
+#define _UTFR_RTD_MICRO_H_
+
 // Pins:
 #define MEGA_OUT_PIN 6
-#define BRAKE_IN_PIN A2
+#define BRAKE_IN_PIN A2 
 
 class UTFR_RTD_MICRO
 {
@@ -42,3 +46,5 @@ private:
     int kBRAKE_THRESHOLD_ = 100;   // Brake threshold for active RTD
     int kTHROTTLE_THRESHOLD_ = 10; // Throttle threshold for active RTD
 };
+
+#endif
