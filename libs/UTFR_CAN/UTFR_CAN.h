@@ -98,9 +98,9 @@ class UTFR_CAN
         // ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
         // ----------------------------------------------------------------------------------------------------->>
 
-        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =                        // Initialize CAN message array   
-        {
-            [CAN_MSG_ER0] = 
+        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =            // Initialize CAN message array   
+        {                                                   // Error messages need to be first to work with the CAN Library
+            [CAN_MSG_ER0] =         
             {
                 .msgID = 0x1B2, //TBD
                 .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
