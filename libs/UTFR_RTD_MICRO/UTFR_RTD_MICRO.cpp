@@ -20,18 +20,18 @@ bool UTFR_RTD_MICRO::confirmReady(int throttle)
     {
         if (checkThrottle(throttle))
         {
-#ifdef debugMode
+            #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Throttle Invalid, returning False");
-#endif
+            #endif
             digitalWrite(MEGA_OUT_PIN, LOW);
             return false;
         }
 
         if (checkBrake())
         {
-#ifdef debugMode
+            #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Brake Invalid, returning False");
-#endif
+            #endif
             digitalWrite(MEGA_OUT_PIN, LOW);
             return false;
         }
@@ -39,30 +39,30 @@ bool UTFR_RTD_MICRO::confirmReady(int throttle)
     }
 
     digitalWrite(MEGA_OUT_PIN, HIGH);
-#ifdef debugMode
+    #ifdef debugMode
     Serial.println("UTFR_RTD_MICRO::confirmReady: RTD ready, set MEGA_OUT_PIN HIGH");
-#endif
+    #endif
     return true;
 }
 
 bool UTFR_RTD_MICRO::checkThrottle(int throttle)
 {
-#ifdef throttleCheck
+    #ifdef throttleCheck
     if (throttle > kTHROTTLE_THRESHOLD_)
     {
         return false;
     }
-#endif
+    #endif
     return true;
 }
 
 bool UTFR_RTD_MICRO::checkBrake()
 {
-#ifdef brakeCheck
+    #ifdef brakeCheck
     if ((analogRead(A2) < kBRAKE_THRESHOLD_))
     {
         return false;
     }
-#endif
+    #endif
     return true;
 }
