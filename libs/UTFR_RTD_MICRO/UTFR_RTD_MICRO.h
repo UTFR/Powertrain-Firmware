@@ -1,43 +1,44 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-//#include UTFR_APPS.h
 #include <Arduino.h>
 #include "UTFR_RTD_MICRO_CONFIG.h"
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-//Pins:
-#define MEGA_OUT_PIN        6
-#define BRAKE_IN_PIN        A2             
+// Pins:
+#define MEGA_OUT_PIN 6
+#define BRAKE_IN_PIN A2
 
-class UTFR_RTD_MICRO{
-    public:
-        UTFR_RTD_MICRO();
+class UTFR_RTD_MICRO
+{
+public:
+    UTFR_RTD_MICRO();
 
-        /*! Check Throttle & Brake
-         *  @param[in] throttle position from APPS
-         *  @returns True if throttle and brake are ready for RTD for
-         *           for more than kCHECK_COUNTER_ loops.
-         */
-        bool confirmReady(int throttle);
-    private:
-        /*! Check Throttle Input 
-         *  @param[in] throttle position
-         *  @returns True if throttle is below kTHROTTLE_THRESHOLD_, 
-         *           false otherwise
-         */
-        bool checkThrottle(int throttle);
+    /*! Check Throttle & Brake
+     *  @param[in] throttle position from APPS
+     *  @returns True if throttle and brake are ready for RTD for
+     *           for more than kCHECK_COUNTER_ loops.
+     */
+    bool confirmReady(int throttle);
 
-        /*! Check Brake Input 
-         *  @returns True if Brake is above kBRAKE_THRESHOLD_, 
-         *           false otherwise
-         */
-        bool checkBrake();
+private:
+    /*! Check Throttle Input
+     *  @param[in] throttle position
+     *  @returns True if throttle is below kTHROTTLE_THRESHOLD_,
+     *           false otherwise
+     */
+    bool checkThrottle(int throttle);
 
-        int kCHECK_COUNTER_ = 5; //Number of loops that each condition must be met 
-                                 //for RTD
-        int kBRAKE_THRESHOLD_ = 100; //Brake threshold for active RTD
-        int kTHROTTLE_THRESHOLD_ = 10; //Throttle threshold for active RTD
+    /*! Check Brake Input
+     *  @returns True if Brake is above kBRAKE_THRESHOLD_,
+     *           false otherwise
+     */
+    bool checkBrake();
+
+    int kCHECK_COUNTER_ = 5;       // Number of loops that each condition must be met
+                                   // for RTD
+    int kBRAKE_THRESHOLD_ = 100;   // Brake threshold for active RTD
+    int kTHROTTLE_THRESHOLD_ = 10; // Throttle threshold for active RTD
 };

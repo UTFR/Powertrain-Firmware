@@ -1,76 +1,82 @@
 #include "UTFR_RTD_MEGA.h"
 
 UTFR_RTD_MEGA::UTFR_RTD_MEGA()
-{   
+{
     // Initialize Pins
     pinMode(RTD_OUT_PIN, OUTPUT);
     pinMode(IGNITION_OUT_PIN, OUTPUT);
 
-    #ifdef debugMode
+#ifdef debugMode
     Serial.println("RTD instantiated correctly on micro.");
-    #endif
+#endif
 }
 
 bool UTFR_RTD_MEGA::confirmReady(bool sdc, bool inv, bool micro, bool cooling)
 {
-    #ifdef rtdInCheck
-    if (digitalRead(RTD_IN_PIN) == LOW) {
-        #ifdef debugMode
+#ifdef rtdInCheck
+    if (digitalRead(RTD_IN_PIN) == LOW)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady: RTD_IN_PIN low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
-    #ifdef ignitionInCheck
-    if (digitalRead(IGNITION_IN_PIN) == LOW) {
-        #ifdef debugMode
+#ifdef ignitionInCheck
+    if (digitalRead(IGNITION_IN_PIN) == LOW)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady: IGNITION_IN_PIN low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
-    #ifdef sdcCheck
-    if (!sdc ) {
-        #ifdef debugMode
+#ifdef sdcCheck
+    if (!sdc)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady: SDC low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
-    #ifdef inverterCheck
-    if (!inv) {
-        #ifdef debugMode
+#ifdef inverterCheck
+    if (!inv)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady: INV low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
-    #ifdef microCheck
-    if (!micro) {
-        #ifdef debugMode
+#ifdef microCheck
+    if (!micro)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady: Micro low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
-    #ifdef coolingCheck
-    if (!cooling) {
-        #ifdef debugMode
+#ifdef coolingCheck
+    if (!cooling)
+    {
+#ifdef debugMode
         Serial.println("UTFR_RTD_MEGA::confirmReady:Cooling low, returning False");
-        #endif
+#endif
         return false;
     }
-    #endif
+#endif
 
     digitalWrite(RTD_OUT_PIN, HIGH);
     digitalWrite(IGNITION_OUT_PIN, HIGH);
-    #ifdef debugMode
+#ifdef debugMode
     Serial.println("UTFR_RTD_MEGA::confirmReady: RTD ready, set RTD_OUT_PIN, IGNITION_OUT_PIN to HIGH");
-    #endif
+#endif
     return true;
-}
+};
