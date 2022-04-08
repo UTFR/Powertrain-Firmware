@@ -63,14 +63,19 @@ class UTFR_COOLING{
     uint8_t mot_lowpress_counter = 0;
 
     //===Temperature===
-    const int kLOW_TEMP = 0; //unknwon
-    const int kHIGH_TEMP = 275; //unknown
+    const int kLOW_TEMP = 0; 
+    const int kHIGH_TEMP = 275;
 
     const int kLOW_TEMP_VOLT = 102;
     const int kHIGH_TEMP_VOLT = 921;
 
-    const int kTEMP_PUMP_THRESHOLD = 50;
-    const int kTEMP_DANGER_THRESHOLD = 80;
+    const int kMOTOR_TEMP_PUMP_ON_THRESHOLD = 50;
+    const int kMOTOR_TEMP_PUMP_OFF_THRESHOLD = 20;
+    const int kMOTOR_TEMP_DANGER_THRESHOLD = 80;
+
+    const int kINV_TEMP_PUMP_THRESHOLD = 50;
+    const int kINV_TEMP_PUMP_OFF_THRESHOLD = 20;
+    const int kINV_TEMP_DANGER_THRESHOLD = 80;
 
     const uint8_t kOVERTEMP_THRESHOLD = 10; //How many loops before false is sent
     uint8_t overtemp_counter = 0;
