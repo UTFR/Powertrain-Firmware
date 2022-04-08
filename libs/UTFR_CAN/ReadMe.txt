@@ -15,6 +15,7 @@
 =========================================================
   --> ArduinoSTL version 1.3.3  (comment out '#define ARDUINOSTL_DEFAULT_CIN_COUT' in ArudinoSTL.cpp to reduce size) 
   --> CAN-BUS Shield version 1.0.0
+  --> TimerOne version 1.1.0
 
 
 ===== FOR EACH UNIQUE VERSION, EDIT THESE THINGS =======
