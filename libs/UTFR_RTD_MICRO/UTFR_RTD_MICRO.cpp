@@ -5,7 +5,7 @@ UTFR_RTD_MICRO::UTFR_RTD_MICRO()
     // Initialize Pins
     pinMode(MEGA_OUT_PIN, OUTPUT);
     pinMode(BRAKE_IN_PIN, INPUT);
-    digitalWrite(MEGA_OUT_PIN, HIGH);
+    digitalWrite(MEGA_OUT_PIN, LOW);
 
 #ifdef debugMode
     Serial.println("RTD instantiated correctly on micro.");
