@@ -4,16 +4,23 @@
 UTFR_COMMS_MICRO::UTFR_COMMS_MICRO()
 {
     megaSerial.begin(115200);
-
 }
 
 void UTFR_COMMS_MICRO::sendSerialMega(UTFR_APPS &APPS, _COMMS_msgNames_E msgName)
 {
     if (msgName == COMMS_MSG_LOGDATA)
     {
-        _sendData = {COMMS_MSG_LOGDATA,
-                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-                    0xFF, 0xFF, 0xFF};   
+        //The below is not allowed in cpp - the loop works, but 
+        // I'm sure there's a more efficent way to do this with std::copy
+
+        /*_sendData = {COMMS_MSG_LOGDATA,
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                    0xFF, 0xFF, 0xFF};  */ 
+        _sendData[0] = COMMS_MSG_LOGDATA;
+        for (size_t i = 1; i < 9; ++i) {
+            _sendData[i] = 0xFF;
+        }
+
 
         // Get data
         _throttle_out = APPS.getThrottlePosition();
