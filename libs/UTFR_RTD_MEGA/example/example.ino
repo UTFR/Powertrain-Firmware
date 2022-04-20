@@ -18,7 +18,6 @@ int fake_startup_counter = 0;
 bool cooling = false;
 bool sdc = true;
 bool inv = true;
-bool micro = true;
 
 void setup()
 {
@@ -27,7 +26,7 @@ void setup()
 
 void loop()
 {
-    while (!RTD.confirmReady(sdc, inv, micro, cooling))
+    while (!RTD.confirmReady(sdc, inv, cooling))
     {
         // check bools again
         fake_startup_counter += 1;
@@ -35,6 +34,8 @@ void loop()
         {
             cooling = true; // Set Cooling to be ready for RTD
         }
+        delay(1000);
     }
     Serial.println("RTD Ready!");
+    delay(1000);
 }

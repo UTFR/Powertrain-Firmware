@@ -18,7 +18,7 @@ bool UTFR_RTD_MICRO::confirmReady(int throttle)
     int check_counter = 0;
     while (check_counter < kCHECK_COUNTER_)
     {
-        if (checkThrottle(throttle))
+        if (!checkThrottle(throttle))
         {
             #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Throttle Invalid, returning False");
@@ -27,7 +27,7 @@ bool UTFR_RTD_MICRO::confirmReady(int throttle)
             return false;
         }
 
-        if (checkBrake())
+        if (!checkBrake())
         {
             #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Brake Invalid, returning False");
@@ -59,7 +59,7 @@ bool UTFR_RTD_MICRO::checkThrottle(int throttle)
 bool UTFR_RTD_MICRO::checkBrake()
 {
     #ifdef brakeCheck
-    if ((analogRead(A2) < kBRAKE_THRESHOLD_))
+    if ((analogRead(A2) < kBRAKE_THRESHOLD_)) //TODO - map to human readable values
     {
         return false;
     }

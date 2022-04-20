@@ -16,7 +16,7 @@
 UTFR_RTD_MICRO RTD;
 UTFR_APPS APPS;
 
-int throttle = 0;
+int throttle = 100;
 
 const int DAC_CS = 7;      // DAC CS pin
  
@@ -26,13 +26,16 @@ void setup() {
 }
 
 void loop() {
-  APPS.processThrottlePosition();
-  int throttle = APPS.getThrottlePosition();
+  //APPS.processThrottlePosition();
+  //int throttle = APPS.getThrottlePosition();
   while (!RTD.confirmReady(throttle)){
       //check bools again
-      delay(500);
-      APPS.processThrottlePosition();
-      throttle = APPS.getThrottlePosition();
+      delay(1000);
+      //APPS.processThrottlePosition();
+      //throttle = APPS.getThrottlePosition();
+      throttle -= 10; //Throttle should go within valid range in 5s
+      Serial.println(throttle);
   }
   Serial.println("RTD Ready!");
+  delay(2000);
 }

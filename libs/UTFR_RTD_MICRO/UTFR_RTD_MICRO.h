@@ -43,7 +43,7 @@ private:
 
     int kCHECK_COUNTER_ = 5;       // Number of loops that each condition must be met
                                    // for RTD
-    int kBRAKE_THRESHOLD_ = 100;   // Brake threshold for active RTD
+    int kBRAKE_THRESHOLD_ = 95;   // Brake threshold for active RTD
     int kTHROTTLE_THRESHOLD_ = 10; // Throttle threshold for active RTD
 };
 
