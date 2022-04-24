@@ -1,59 +1,66 @@
-UTFR_RTD_MICRO::UTFR_RTD_MICRO(uint8_t CS)
-{   
+#include "UTFR_RTD_MICRO.h"
+
+UTFR_RTD_MICRO::UTFR_RTD_MICRO()
+{
     // Initialize Pins
     pinMode(MEGA_OUT_PIN, OUTPUT);
-    pinMode(TEMP_IN_PIN, INPUT);
-    pinMode(THROTTLE_IN_PIN, INPUT);
+    pinMode(BRAKE_IN_PIN, INPUT);
+    digitalWrite(MEGA_OUT_PIN, LOW);
 
-    #ifdef debugMode
+#ifdef debugMode
     Serial.println("RTD instantiated correctly on micro.");
-    #endif
+#endif
 }
 
-bool UTFR_RTD_MICRO::confirmReady(){
+bool UTFR_RTD_MICRO::confirmReady(int throttle)
+{
 
     int check_counter = 0;
-    while (check_counter < kCHECK_COUNTER_) {
-        if (!checkThrottle()) {
+    while (check_counter < kCHECK_COUNTER_)
+    {
+        if (!checkThrottle(throttle))
+        {
             #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Throttle Invalid, returning False");
             #endif
-            digitalWrite(MEGA_OUT, LOW);
+            digitalWrite(MEGA_OUT_PIN, LOW);
             return false;
         }
 
-        if (!checkBrake()) {
+        if (!checkBrake())
+        {
             #ifdef debugMode
             Serial.println("UTFR_RTD_MICRO::confirmReady: Brake Invalid, returning False");
             #endif
-            digitalWrite(MEGA_OUT, LOW);
+            digitalWrite(MEGA_OUT_PIN, LOW);
             return false;
         }
         check_counter++;
     }
 
-    digitalWrite(MEGA_OUT, HIGH);
-    digitalWrite(IGNITION_OUT_PIN, HIGH);
+    digitalWrite(MEGA_OUT_PIN, HIGH);
     #ifdef debugMode
     Serial.println("UTFR_RTD_MICRO::confirmReady: RTD ready, set MEGA_OUT_PIN HIGH");
     #endif
     return true;
-    }
 }
 
-bool UTFR_RTD_MICRO::checkThrottle() {
-    //int throttle_average = APPS->getThrottle();
+bool UTFR_RTD_MICRO::checkThrottle(int throttle)
+{
     #ifdef throttleCheck
-    if (throttle_average > kTHROTTLE_THRESHOLD_) {
+    if (throttle > kTHROTTLE_THRESHOLD_)
+    {
         return false;
     }
     #endif
     return true;
 }
 
-bool UTFR_RTD_MICRO::checkBrake() {
+bool UTFR_RTD_MICRO::checkBrake()
+{
     #ifdef brakeCheck
-    if ((analogRead(A2) < kBRAKE_THRESHOLD_)){
+    if ((analogRead(A2) < kBRAKE_THRESHOLD_)) //TODO - map to human readable values
+    {
         return false;
     }
     #endif

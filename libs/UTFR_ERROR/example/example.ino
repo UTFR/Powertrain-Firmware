@@ -11,25 +11,28 @@
  * 
  */
 #include "UTFR_ERROR.h"
+#include "UTFR_CAN.h"
 
 #define HW_PIN_CS_TEST 10           // Change to proper CS pin
 
-UTFR_ERROR ERROR_NODE(HW_PIN_CS_TEST);       // Create Error Node Object
+UTFR_CAN NODE(HW_PIN_CS_TEST);       // Create CAN node object
+UTFR_ERROR ERROR;
 
-int bms_overvoltage_counter = 0; //Dummy delay counter
+int bms_overvoltage_counter = 0;    //Dummy delay counter
  
 void setup() {
   
   Serial.begin(9600);
 
 // ----------- SIMPLE SETUP ----------------------------
-  ERROR_NODE.begin(CAN_500KBPS);           // Initialize CAN node
+  NODE.begin(CAN_500KBPS);           // Initialize CAN node
+  NODE.setFilters_permitAll();       // Set filters to accept all incoming messages
 }
 
 void loop() {
   delay(500);
   bms_overvoltage_counter++;
   if (bms_overvoltage_counter == 5) { //Dummy fail state
-    ERROR_NODE.sendError(BMS_UNDERVOLT);
+    ERROR.sendError(NODE,BMS_UNDERVOLT);
   }
 }

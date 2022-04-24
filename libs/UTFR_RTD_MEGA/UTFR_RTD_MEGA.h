@@ -1,43 +1,34 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-#include UTFR_RTD_MEGA_CONFIG.h
+#include "Arduino.h"
+#include "UTFR_RTD_MEGA_CONFIG.h"
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-//Pins:
-#define RTD_OUT_PIN       = 24 //Change to real values
-#define IGNITION_OUT_PIN  = 21
+#ifndef _UTFR_RTD_MEGA_H_
+#define _UTFR_RTD_MEGA_H_
 
-class UTFR_RTD_MEGA{
+//Pins:
+#define RTD_IN_PIN          25 
+#define RTD_OUT_PIN         24
+#define IGNITION_IN_PIN     21
+#define IGNITION_OUT_PIN    38
+#define MICRO_IN_PIN        20     
+
+class UTFR_RTD_MEGA
+{
     public:
         UTFR_RTD_MEGA();
-        bool confirmReady(bool sdc, bool inv, bool micro, bool cooling);
-    private:
-}
-
-/******************************************************************************
- *                              T Y P E D E F S                               *
- *****************************************************************************/
-
-
-/******************************************************************************
- *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
- *****************************************************************************/
-
-
-/******************************************************************************
- *              P R I V A T E   D A T A   D E F I N I T I O N S               *
- *****************************************************************************/
-
-
-/******************************************************************************
- *                     P R I V A T E   F U N C T I O N S                      *
- *****************************************************************************/
-
-
-/******************************************************************************
- *                      P U B L I C   F U N C T I O N S                       *
- *****************************************************************************/
+        /*! Checks RTD logic using RTD & Ignition In Pins, and the below bools.
+         *  @param[in] sdc bool of SDC status - True when not active.
+         *  @param[in] inv bool of INV status - True when Ready
+         *  @param[in] cooling bool of cooling status - True when no issues arise
+         *  @returns True if RTD & Ignition signals are both recieved, and all 
+         *           above bools are true - false otherwise.
+         */
+        bool confirmReady(bool sdc, bool inv, bool cooling);
+};
+#endif
 

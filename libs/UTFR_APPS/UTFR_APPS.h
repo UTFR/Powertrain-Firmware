@@ -15,9 +15,11 @@ class UTFR_APPS {
         UTFR_APPS(uint8_t dataOut = 255, uint8_t clock = 255);
         void begin(int CS);
         void processThrottlePosition();
+        int getThrottlePosition();              // returns _APPS_output
         void shutDown();
         bool getShutdownState();                // returns true if shutdown() function has been called        
         bool confirmShutdown();                 // returns true if output of DAC is 0
+
 
     private:
 

@@ -51,15 +51,16 @@
 #define ER_BMS_UNDERVOLT_F  3
 
 // ER1 - Error CAN Message 1
-//#define ER_APPS_MISMATCH    1
-//#define ER_SDC_TRIPPED      2
+#define ER_APPS_MISMATCH    1
+#define ER_APPS_OUTPUT      2
+#define ER_SDC_TRIPPED      3
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
-{                                           
-    CAN_MSG_RF0,  
-    CAN_MSG_RF1,
-    CAN_MSG_ER0,
-    //CAN_MSG_ER1,
+        {     
+            CAN_MSG_ER0,
+            CAN_MSG_ER1,                                      
+            CAN_MSG_RF0,  
+            CAN_MSG_RF1,
 
     CAN_MSG_COUNT
 };
@@ -108,8 +109,34 @@ class UTFR_CAN
         // ---------->> CHANGE THESE FOR EACH SPECIFIC IMPLEMENTATION OF THIS LIBRARY
         // ----------------------------------------------------------------------------------------------------->>
 
-        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =               // Initialize CAN message array   
-        {
+        CAN_msg_S _CAN_msgArray[CAN_MSG_COUNT] =            // Initialize CAN message array   
+        {                                                   // Error messages need to be first to work with the CAN Library
+            [CAN_MSG_ER0] =         
+            {
+                .msgID = 0x1B2, //TBD
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
+                              ER_BMS_UNDERVOLT_F, UNUSED_F,
+                              UNUSED_F,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
+            [CAN_MSG_ER1] = 
+            {
+                .msgID = 0x1B3, //TBD
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {ER_APPS_MISMATCH,  ER_APPS_OUTPUT, 
+                              ER_SDC_TRIPPED,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F,
+                              UNUSED_F,     UNUSED_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
             [CAN_MSG_RF0] = 
             {
                 .msgID = 0x1B0,
@@ -132,19 +159,6 @@ class UTFR_CAN
                               FW_STRAIN_TIP_F, FW_STRAIN_TIP_F,
                               STEER_ANG_F,     STEER_ANG_F,
                               UNUSED_F,        UNUSED_F},
-                .isTx = true,
-                .isRx = false,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER0] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
                 .isTx = true,
                 .isRx = false,
                 .isDirty = false,
