@@ -97,8 +97,8 @@ class UTFR_CAN_RC
                               ER_BMS_UNDERVOLT_F, UNUSED_F,
                               UNUSED_F,     UNUSED_F,
                               UNUSED_F,     UNUSED_F},
-                .isTx = true,
-                .isRx = false,
+                .isTx = false,
+                .isRx = true,
                 .isDirty = false,
             },
             [CAN_MSG_MICRO] = 
