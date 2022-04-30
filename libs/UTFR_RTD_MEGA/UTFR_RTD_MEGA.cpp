@@ -8,7 +8,6 @@ UTFR_RTD_MEGA::UTFR_RTD_MEGA()
     pinMode(IGNITION_OUT_PIN, OUTPUT);
     pinMode(MICRO_IN_PIN, INPUT);
 
-    
     #ifdef debugMode
     Serial.println("RTD instantiated correctly on micro.");
     #endif

@@ -3,7 +3,8 @@
  *****************************************************************************/
 #include <Arduino.h>
 #include "lib_util.h"
-#include "UTFR_CAN.h"
+#include "UTFR_CAN_RC.h"
+#include "UTFR_ERROR.h"
 
 
 /******************************************************************************
@@ -12,7 +13,7 @@
 #ifndef _UTFR_COOLING_H_
 #define _UTFR_COOLING_H_
 
-//Pins:
+// Pins:
 //===Pressure===
 #define MOT_IN_PRESS_PIN A10 //Check pinout
 #define MOT_OUT_PRESS_PIN A9 
@@ -37,24 +38,27 @@
 
 //#define debugMode
 
-class UTFR_COOLING{
+/******************************************************************************
+ *                              T Y P E D E F S                               *
+ *****************************************************************************/
+class UTFR_COOLING
+{
   public: 
-    UTFR_COOLING();
 
-    bool checkTemp(UTFR_CAN& can);
-
-    bool checkPress(UTFR_CAN& can);
-
-    bool checkFlow(UTFR_CAN& can);
+    UTFR_COOLING();                                                 // Constructor
+    bool checkCoolingLoop(UTFR_CAN_RC& CAN, UTFR_ERROR& ERRORS);   // Checks if cooling loop parameters are within safe bounds
 
   private:
-    //<---------------- GLOBAL CLASS VARIABLES ------------------->
+    
+    /******************************************************************************
+    *              P R I V A T E   D A T A   D E F I N I T I O N S               *
+    *****************************************************************************/
     //===Pressure===
     const float kLOW_PRESS = 0;
     const float kHIGH_PRESS = 100;
 
-    const float kLOW_PRESS_VOLT = 102;
-    const float kHIGH_PRESS_VOLT = 921;
+    const float kLOW_PRESS_RAW = 102;
+    const float kHIGH_PRESS_RAW = 921;
 
     const float kPRESS_DANGER_THRESHOLD = 10;
 
@@ -66,8 +70,8 @@ class UTFR_COOLING{
     const int kLOW_TEMP = 0; 
     const int kHIGH_TEMP = 275;
 
-    const int kLOW_TEMP_VOLT = 102;
-    const int kHIGH_TEMP_VOLT = 921;
+    const int kLOW_TEMP_RAW = 102;
+    const int kHIGH_TEMP_RAW = 921;
 
     const int kMOTOR_TEMP_PUMP_ON_THRESHOLD = 50;
     const int kMOTOR_TEMP_PUMP_OFF_THRESHOLD = 20;
@@ -84,8 +88,8 @@ class UTFR_COOLING{
     const float kLOW_FLOW = 0;
     const float kHIGH_FLOW = 65;
 
-    const float kLOW_FLOW_VOLT = 2;
-    const float kHIGH_FLOW_VOLT = 1023;
+    const float kLOW_FLOW_RAW = 2;
+    const float kHIGH_FLOW_RAW = 1023;
 
     const float kFLOW_DANGER_THRESHOLD = 10;
 
@@ -95,6 +99,18 @@ class UTFR_COOLING{
     //===Pump===
     bool inv_pump = false;
     bool mot_pump = false;
+
+    //===Fail Check===
+    const uint8_t maxFailed = 3;        // How many times a shutdown-causing state should be re-checked before car shutdown
+    uint8_t failedChecks = 0;           // Counts up to maxFailed then shuts down the car
+
+
+    /******************************************************************************
+    *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
+    *****************************************************************************/
+    bool checkTemp(UTFR_CAN_RC& can);    // Gets coolant temps, stores values in CAN array, returns false if critical overheating
+    bool checkPress(UTFR_CAN_RC& can);   // Gets coolant pressures, returns false if overpressure (stores values in CAN array)
+    bool checkFlow(UTFR_CAN_RC& can);    // Gets coolant flow rate, returns false if pump is ON && no flow, true otherwise
 
 };
 #endif
