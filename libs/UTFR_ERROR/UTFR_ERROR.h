@@ -16,13 +16,12 @@
 enum errorNAMES_E { //All possible types of errors
   BMS_OVERTEMP,
   BMS_UNDERVOLT,
-  BMS_OVERVOLT,
   APPS_MISMATCH,
   APPS_OUTPUT,
   SDC_TRIPPED,
-  COOLANT_OVERHEAT,
+  COOLANT_OVERTEMP,
   COOLANT_PRESSURE,
-  COOLANT_FLOW
+  COOLANT_FLOW,
 };
 
 class UTFR_ERROR{
@@ -38,9 +37,8 @@ class UTFR_ERROR{
     //<---------------- GLOBAL CLASS VARIABLES ------------------->
 
     const uint8_t error_map_[2][8] = { //using 0xFF to represent empty fields, 0x00 to represent active fields
-      {BMS_OVERTEMP, BMS_UNDERVOLT, BMS_OVERVOLT, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
-      {APPS_MISMATCH, APPS_OUTPUT, SDC_TRIPPED, 0xFF, 0xFF, 0xFF, 0xFF},
-      {COOLANT_OVERHEAT, COOLANT_PRESSURE, COOLANT_FLOW, }
+      {BMS_OVERTEMP, BMS_UNDERVOLT, APPS_MISMATCH, APPS_OUTPUT, SDC_TRIPPED, 0xFF, 0xFF, 0xFF},
+      {COOLANT_OVERTEMP, COOLANT_PRESSURE, COOLANT_FLOW, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
     };
 };
 #endif

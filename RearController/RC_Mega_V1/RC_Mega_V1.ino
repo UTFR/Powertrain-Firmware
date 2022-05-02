@@ -152,8 +152,11 @@ void loop()
 //------ Main Drive Loop --------------
   while(carState == CAR_STATE_DRIVE)
   {
-    COOLING.checkCoolingLoop(CAN, ERRORS);
-    LVBATT.checkLVBatt(ERRORS);                         // Check for messages from powertrain CAN node
+    if(!COOLING.checkCoolingLoop(CAN, ERRORS) || !LVBATT.checkLVBatt(CAN, ERRORS))   // Check state of cooling loop and LV battery       
+    {
+      carState = CAR_STATE_ZERO_TORQUE;
+    }
+    // TO DO: Check for messages from powertrain CAN node, act accordingly
   }
 
 //------ Zero Torque Sequence ---------

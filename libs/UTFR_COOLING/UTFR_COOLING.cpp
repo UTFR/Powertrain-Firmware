@@ -214,7 +214,7 @@ bool UTFR_COOLING::checkCoolingLoop(UTFR_CAN_RC& CAN, UTFR_ERROR& ERRORS)
 
     if (!checkTemp(CAN))                          // Returns true if in safe range, turns on pumps if over a certain temp threshold (Ask Cristian)          
     { 
-        ERRORS.sendError(CAN, COOLANT_OVERHEAT);    // TO DO: Make sure this error type exists. Add if not.                                   
+        ERRORS.sendError(CAN, COOLANT_OVERTEMP);  // TO DO: Make sure this error type exists. Add if not.                                   
         fail = true;                 
     }
             
@@ -235,9 +235,9 @@ bool UTFR_COOLING::checkCoolingLoop(UTFR_CAN_RC& CAN, UTFR_ERROR& ERRORS)
         failedChecks += 1;
         if (failedChecks >= maxFailed)
         {
-            shutdown_sendZeroTorque();              // From RC_MEGA_V1.ino
+            return false;
         }
-        return false;
+        
     }
     else
     {

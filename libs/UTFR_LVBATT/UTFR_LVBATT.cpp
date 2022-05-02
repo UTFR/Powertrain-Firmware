@@ -12,19 +12,13 @@ UTFR_LVBATT::UTFR_LVBATT()
 }
 
 
-_HW_LVBattMux_E UTFR_LVBATT::enumOfIndex()
-{
-    return static_cast<_HW_LVBattMux_E>(i);
-}
-
-
 void UTFR_LVBATT::readCellVoltage(uint8_t muxPin)
 {
-    bool SA_state = (muxPin & SA_MASK);
+    bool SA_state = (muxPin & _SA_MASK);
 
-    bool SB_state = (muxPin & SB_MASK) >> 1;
+    bool SB_state = (muxPin & _SB_MASK) >> 1;
 
-    bool SC_state = (muxPin & SC_MASK) >> 2;
+    bool SC_state = (muxPin & _SC_MASK) >> 2;
 
 
     // Set the mux select pins
@@ -59,7 +53,7 @@ void UTFR_LVBATT::readBattTemps()
 }
 
 
-bool UTFR_LVBATT::checkLVBatt(UTFR_ERROR& ERROR)
+bool UTFR_LVBATT::checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR)
 {
     bool fail = false;
 
@@ -69,10 +63,10 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_ERROR& ERROR)
        if (_readVoltage < _volt_cutoff[_cell])
        {    
             #ifdef debugLVBatt
-            Serial.println("BMS_UNDERVOLTAGE_ERROR");
+            Serial.println("BMS UNDERVOLTAGE ERROR");
             #endif
             
-            ERROR.sendError(BMS_UNDERVOLTAGE_ERROR);
+            ERROR.sendError(CAN, BMS_UNDERVOLT);
             fail = true;
        }
     }
@@ -81,10 +75,10 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_ERROR& ERROR)
     if (_readTemp > _temp_cutoff)
     {
         #ifdef debugLVBatt
-        Serial.println("BMS_OVERTEMP_ERROR");
+        Serial.println("BMS OVERTEMP ERROR");
         #endif
 
-        ERROR.sendError(BMS_OVERTEMP_ERROR);
+        ERROR.sendError(CAN, BMS_OVERTEMP);
         fail = true;
     }
     
@@ -93,9 +87,9 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_ERROR& ERROR)
         _failedChecks += 1;
         if (_failedChecks >= _maxFailed)
         {
-            shutdown_sendZeroTorque();                      // From RC_MEGA_V1.ino
+            return false;
         }
-        return false;
+        
     }
     else
     {

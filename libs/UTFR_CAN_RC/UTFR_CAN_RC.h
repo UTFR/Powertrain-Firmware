@@ -23,10 +23,18 @@
 
 #define UNUSED_F 0                          // Define your message data fields here so you can access them by name later
 
-// ER0 - Error CAN Message 0
-#define ER_BMS_OVERTEMP_F   1
-#define ER_BMS_OVERVOLT_F   2
-#define ER_BMS_UNDERVOLT_F  3
+// ER0 - Error CAN Message 0 (LV BMS, APPS, SDC)
+#define ER_BMS_OVERTEMP_F  1
+#define ER_BMS_UNDERVOLT_F 2
+#define ER_APPS_MISMATCH_F 3
+#define ER_APPS_OUTPUT_F   4
+#define ER_SDC_TRIPPED_F   5
+
+
+// ER1 - Error CAN Message 1 (Coolant Loop)
+#define ER_COOLANT_OVERTEMP_F 1
+#define ER_COOLANT_PRESSURE_F 2
+#define ER_COOLANT_FLOW_F     3
 
 // RF0 - Right Front corner module CAN message 0
 #define RF_OUT_TIRE_TEMP_F  1               // 1st field
@@ -38,24 +46,6 @@ enum CAN_msgNames_E                          // Define all CAN message names her
 {                                          
     CAN_MSG_ER0,
     CAN_MSG_ER1,
-    CAN_MSG_ER2,
-    CAN_MSG_ER3,
-    CAN_MSG_ER4,
-    CAN_MSG_ER5,
-    CAN_MSG_ER6,
-    CAN_MSG_ER7,
-    CAN_MSG_ER8,
-    CAN_MSG_ER9,
-    CAN_MSG_ERR0,
-    CAN_MSG_ERR1,
-    CAN_MSG_ERR2,
-    CAN_MSG_ERR3,
-    CAN_MSG_ERR4,
-    CAN_MSG_ERR5,
-    CAN_MSG_ERR6,
-    CAN_MSG_ERR7,
-    CAN_MSG_ERR8,
-    CAN_MSG_ERR9,
     CAN_MSG_RF0,
     
     CAN_MSG_COUNT
@@ -109,15 +99,15 @@ class UTFR_CAN_RC
         {
             [CAN_MSG_ER0] = 
             {
-                .msgID = 0x1B2, //TBD
+                .msgID = 0x1B1, //TBD
                 .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
                             0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
+                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_UNDERVOLT_F, 
+                              ER_APPS_MISMATCH_F, ER_APPS_OUTPUT_F,
+                              ER_SDC_TRIPPED_F,   UNUSED_F,
+                              UNUSED_F,           UNUSED_F},
+                .isTx = true,
+                .isRx = false,
                 .isDirty = false,
             },
             [CAN_MSG_ER1] = 
@@ -125,251 +115,17 @@ class UTFR_CAN_RC
                 .msgID = 0x1B2, //TBD
                 .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
                             0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER2] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER3] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER4] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER5] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER6] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER7] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER8] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ER9] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR0] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR1] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR2] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR3] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR4] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR5] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR6] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR7] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR8] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
-                .isDirty = false,
-            },
-            [CAN_MSG_ERR9] = 
-            {
-                .msgID = 0x1B2, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {ER_BMS_OVERTEMP_F,  ER_BMS_OVERVOLT_F, 
-                              ER_BMS_UNDERVOLT_F, UNUSED_F,
-                              UNUSED_F,     UNUSED_F,
-                              UNUSED_F,     UNUSED_F},
-                .isTx = false,
-                .isRx = true,
+                .msgFields = {ER_COOLANT_OVERTEMP_F,  ER_COOLANT_PRESSURE_F, 
+                              ER_COOLANT_FLOW_F,      UNUSED_F,
+                              UNUSED_F,               UNUSED_F,
+                              UNUSED_F,               UNUSED_F},
+                .isTx = true,
+                .isRx = false,
                 .isDirty = false,
             },
             [CAN_MSG_RF0] = 
             {
-                .msgID = 0x1B0,
+                .msgID = 0x1B4,
                 .msgData = {0xFF, 0xFF, 0xFF, 0xFF,                         
                             0xFF, 0xFF, 0xFF, 0xFF},                
                 .msgFields = {RF_OUT_TIRE_TEMP_F, RF_OUT_TIRE_TEMP_F, 

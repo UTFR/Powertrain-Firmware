@@ -1,6 +1,7 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
+#include "UTFR_CAN_RC.h"        // TO DO: Add this entire library to CAN library
 #include "UTFR_ERROR.h"
 #include "lib_util.h"
 
@@ -68,8 +69,8 @@ class UTFR_LVBATT
 
     public:
 
-        UTFR_LVBATT();                                      // Constructor
-        bool checkLVBatt(UTFR_ERROR& ERROR);                // Check if LV battery voltages and temps are in safe range
+        UTFR_LVBATT();                                          // Constructor
+        bool checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR);  // Check if LV battery voltages and temps are in safe range
 };
 
 #endif
