@@ -55,12 +55,20 @@
 #define ER_APPS_OUTPUT      2
 #define ER_SDC_TRIPPED      3
 
+// Inverter CAN Messages
+#define INV_VSM_STATE_F                 1
+#define INV_PWM_FREQ_F                  2
+#define INV_INV_STATE_F                 3
+#define INV_REALY_STATE_F               4
+#define INV_RUN_MODE_DISCHARGE_STATE_F  5
+
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
         {     
             CAN_MSG_ER0,
             CAN_MSG_ER1,                                      
             CAN_MSG_RF0,  
             CAN_MSG_RF1,
+            CAN_MSG_INV_INTERNAL_STATE,
 
     CAN_MSG_COUNT
 };
@@ -163,6 +171,20 @@ class UTFR_CAN
                 .isRx = false,
                 .isDirty = false,
             },
+            [CAN_MSG_INV_INTERNAL_STATE] = 
+            {
+                .msgID = 0x0AA,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {INV_VSM_STATE_F,   INV_PWM_FREQ_F, 
+                              INV_INV_STATE_F, INV_REALY_STATE_F,
+                              INV_RUN_MODE_DISCHARGE_STATE_F,     UNUSED_F,
+                              UNUSED_F,        UNUSED_F},
+                .isTx = false,
+                .isRx = true,
+                .isDirty = false,
+            },
+
         };
 
 
