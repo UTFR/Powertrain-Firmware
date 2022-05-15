@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
@@ -5,36 +6,13 @@
 #include "lib_util.h"
 #include "UTFR_CAN_RC.h"
 #include "UTFR_ERROR.h"
-
+#include "UTFR_PIN_DRIVER_MEGA.h"
 
 /******************************************************************************
  *                              D E F I N E S                                 *
  *****************************************************************************/
 #ifndef _UTFR_COOLING_H_
 #define _UTFR_COOLING_H_
-
-// Pins:
-//===Pressure===
-#define MOT_IN_PRESS_PIN A10 //Check pinout
-#define MOT_OUT_PRESS_PIN A9 
-
-#define INV_IN_PRESS_PIN A6
-#define INV_OUT_PRESS_PIN A7
-
-//===Temperature===
-#define MOT_IN_TEMP_PIN A8
-#define MOT_OUT_TEMP_PIN A11
-
-#define INV_IN_TEMP_PIN A4
-#define INV_OUT_TEMP_PIN A5
-
-//===Flow===
-#define INV_IN_FLOW_PIN A2
-#define MOT_IN_FLOW_PIN A3
-
-//===MISC===
-#define MOT_PUMP_PIN 8
-#define INV_PUMP_PIN 9
 
 //#define debugMode
 
@@ -60,9 +38,9 @@ class UTFR_COOLING
     const float kLOW_PRESS_RAW = 102;
     const float kHIGH_PRESS_RAW = 921;
 
-    const float kPRESS_DANGER_THRESHOLD = 10;
+    const float kPRESS_DANGER_THRESHOLD = 10;   // TO DO: Get better estimated thresholds from Christian before testing
 
-    const uint8_t kLOWPRESS_THRESHOLD = 10; //How many loops before false is sent
+    const uint8_t kLOWPRESS_THRESHOLD = 5;      //How many loops before false is sent
     uint8_t inv_lowpress_counter = 0;
     uint8_t mot_lowpress_counter = 0;
 
@@ -73,15 +51,15 @@ class UTFR_COOLING
     const int kLOW_TEMP_RAW = 102;
     const int kHIGH_TEMP_RAW = 921;
 
-    const int kMOTOR_TEMP_PUMP_ON_THRESHOLD = 50;
-    const int kMOTOR_TEMP_PUMP_OFF_THRESHOLD = 20;
+    const int kMOTOR_TEMP_FAN_ON_THRESHOLD = 50;    //This is controlled by external fan controller (hopefully)
+    const int kMOTOR_TEMP_FAN_OFF_THRESHOLD = 20;
     const int kMOTOR_TEMP_DANGER_THRESHOLD = 80;
 
-    const int kINV_TEMP_PUMP_THRESHOLD = 50;
-    const int kINV_TEMP_PUMP_OFF_THRESHOLD = 20;
+    const int kINV_TEMP_FAN_ON_THRESHOLD = 50;
+    const int kINV_TEMP_FAN_OFF_THRESHOLD = 20;
     const int kINV_TEMP_DANGER_THRESHOLD = 80;
 
-    const uint8_t kOVERTEMP_THRESHOLD = 10; //How many loops before false is sent
+    const uint8_t kOVERTEMP_THRESHOLD = 5;    //How many loops before false is sent
     uint8_t overtemp_counter = 0;
 
     //===Flow===
@@ -93,17 +71,13 @@ class UTFR_COOLING
 
     const float kFLOW_DANGER_THRESHOLD = 10;
 
-    const uint8_t kLOWFLOW_THRESHOLD = 10; //How many loops before false is sent
+    const uint8_t kLOWFLOW_THRESHOLD = 5;  //How many loops before false is sent
     uint8_t lowflow_counter = 0;
 
-    //===Pump===
-    bool inv_pump = false;
-    bool mot_pump = false;
-
-    //===Fail Check===
-    const uint8_t maxFailed = 3;        // How many times a shutdown-causing state should be re-checked before car shutdown
-    uint8_t failedChecks = 0;           // Counts up to maxFailed then shuts down the car
-
+    //==Fan states==
+    bool FAN_L = false;     // Pumps are always on when car is on therefore we are controlling the fans
+    bool FAN_R = false;     // TO DO: Confirm pins are mapped to correct sides of car
+  
 
     /******************************************************************************
     *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *

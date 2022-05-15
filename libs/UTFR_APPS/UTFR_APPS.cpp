@@ -3,41 +3,21 @@
 
 UTFR_APPS::UTFR_APPS(uint8_t dataOut, uint8_t clock)  : DAC(dataOut, clock)
 {
-
 }
 
-void UTFR_APPS::begin(int CS){
-
-    // give the sensor time to set up:
-    delay(100);
-
-    // initalize the  data ready and chip select pins:
-    pinMode(A0, INPUT);                 // APPS_In_1_Analog pin
-    pinMode(A1, INPUT);                 // APPS_In_2_Analog pin
-    pinMode(A2, INPUT);                 // _Brake_in pin
-    pinMode(A5, INPUT);                 // APPS_Out_Analog
-
-    /*_APPS_1_high = getDigital(_kAPPS_1_HIGH);
-    _APPS_1_low = getDigital(_kAPPS_1_LOW);
-    _APPS_2_high = getDigital(_kAPPS_2_HIGH);
-    _APPS_2_low = getDigital(_kAPPS_2_LOW);
-    _Brake_threshold = getDigital(_kBRAKE_THRESHOLD);*/ 
-    
-    //Doesn't seem to be consistent with the board, let's hardcode once the entire board is together
-
-    _DAC_CS = CS;
+void UTFR_APPS::begin(int CS)
+{
+    delay(10);                          // Give the DAC time to set up
     DAC.begin(CS);
 }
 
 
 void UTFR_APPS::processThrottlePosition()
 {   
-    // read in the voltage values and convert to digital
-    _APPS_1_in = analogRead(A0);
-    _APPS_2_in = analogRead(A1);
+    _APPS_1_in = HW_analogRead(HW_PIN_APPS_IN_1);
+    _APPS_2_in = HW_analogRead(HW_PIN_APPS_IN_2);
 
-    //Automatic calibration - TESTING ONLY
-    #ifdef debugMode
+    #ifdef debug_APPS                   //Automatic calibration - TESTING ONLY
     if (_APPS_1_in > _APPS_1_high) {
         _APPS_1_high = _APPS_1_in;
     }
@@ -50,14 +30,15 @@ void UTFR_APPS::processThrottlePosition()
     if (_APPS_2_in < _APPS_2_low) {
         _APPS_2_low = _APPS_2_in;
     }
+
     Serial.print("APPS_1_Low : ");Serial.print(_APPS_1_low);Serial.print("APPS_1_High : ");Serial.println(_APPS_1_high);
     Serial.print("APPS_2_Low : ");Serial.print(_APPS_2_low);Serial.print("APPS_2_High : ");Serial.println(_APPS_2_high);
     #endif
-    
-    _Brake_in = analogRead(A2);
-    _APPS_out_verify = analogRead(A5);
 
-    #ifdef debugMode
+    _Brake_in = HW_analogRead(HW_PIN_BRAKE_IN);
+    _APPS_out_verify = HW_analogRead(HW_PIN_APPS_OUT);
+
+    #ifdef debug_APPS
     Serial.print("Throttle into DAC: "); Serial.println(_APPS_output);
     #endif
 
@@ -66,51 +47,48 @@ void UTFR_APPS::processThrottlePosition()
     _APPS_1_throttle = map_Generic(_APPS_1_in, _APPS_1_low, _APPS_1_high, 0.0, static_cast<float>(_kANALOG_MAX)); 
     _APPS_2_throttle = map_Generic(_APPS_2_in, _APPS_2_low, _APPS_2_high, 0.0, static_cast<float>(_kANALOG_MAX));
 
-    #ifdef debugMode
+    #ifdef debug_APPS
     Serial.print("APPS_1_in: "); Serial.println(_APPS_1_in);
     Serial.print("APPS_2_in: "); Serial.println(_APPS_2_in);
     Serial.print("APPS_1_throttle: "); Serial.println(_APPS_1_throttle);
     Serial.print("APPS_2_throttle: "); Serial.println(_APPS_2_throttle);
     #endif
 
-
-    // set flags
-    _brakes_good = (_Brake_in > _kBRAKE_THRESHOLD); // && 
-                    //((_APPS_out_verify/_kANALOG_MAX > _kBRAKE_DEVIATION) ||  
-                    //(_APPS_output /_kANALOG_MAX > _kBRAKE_DEVIATION)) 
-                    //);
-
-                    // ^ What are these for?
+    if(!_brake_and_throttle)
+    {
+        _brake_and_throttle = ((_Brake_in > _kBRAKE_THRESHOLD) &&           // DO NOT CHANGE: Rule EV.5.7.1
+                            ((_APPS_out_verify/_kANALOG_MAX > _kTHROTTLE_WHILE_BRAKE_LIMIT) ||  
+                            (_APPS_output /_kANALOG_MAX > _kTHROTTLE_WHILE_BRAKE_LIMIT)) 
+                            );        
+    }    
 
     _throttle_good = (_APPS_1_throttle - _APPS_2_throttle) < static_cast<float>(_kANALOG_MAX)*_kTHROTTLE_MAX_DEVIATION; 
     _output_good = (_APPS_output - _APPS_out_verify) < static_cast<float>(_kANALOG_MAX)*_kOUTPUT_MAX_DEVIATION; //Changed both to a percent of total range
     _error_flag_set = (_time_at_error != _kBASE_TIME);
 
-    //=========OUTPUT PROCESSING==========//
 
-    // while brakes are bad, output is set to 0
-    if (!_brakes_good) // EV.5.7.1
+    if (_brake_and_throttle)                        // Rule EV.5.7.1
     {
-        if (_APPS_out_verify/_kANALOG_MAX > 0.05)   // EV.5.7.2
+        if (_APPS_out_verify/_kANALOG_MAX > 0.05)   // Rule EV.5.7.2
         {
-            shutDown();
+            DAC.analogWrite(0, 0);                  // Send zero torque to inverter
             reportError();
         }
         else
         {
-            _brakes_good = true;
+            _brake_and_throttle = false;
         }
     }
 
     if (_exceed_time_allowance)
     {
-        shutDown();
+        shutdown();
         reportError();
     }
     else
     {
-        sendOutput();           // send output since we're still within error margin
-        _time_now = millis();    // get the current time
+        sendOutput();               // send output since we're still within error margin
+        _time_now = millis();       // get the current time
 
         if (_throttle_good && _output_good)
         {
@@ -128,15 +106,9 @@ void UTFR_APPS::processThrottlePosition()
     }
 }
 
-int UTFR_APPS::getThrottlePosition()
-{
-    return _APPS_output;
-}
-
 
 void UTFR_APPS::sendOutput()
 {
-
     _APPS_output_array[_APPS_output_idx] = static_cast<float>(_kANALOG_MAX) - round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // Take average and round
 
     for (int idx_offset = 0; idx_offset < kLOW_PASS_WINDOW-1; ++idx_offset) {
@@ -149,8 +121,8 @@ void UTFR_APPS::sendOutput()
 
     _APPS_output = (_APPS_output / kLOW_PASS_WINDOW);
 
-    if (_shutdown == true)              // Ensures 0 throttle after shutdown() called (redundant on purpose) 
-    {                                               
+    if (_shutdown || _brake_and_throttle)        // Ensures 0 throttle in both shutdown and brake+throttle cases
+    {                                                   
         _APPS_output = 0;                                                   
     }
     
@@ -162,55 +134,28 @@ void UTFR_APPS::sendOutput()
         _APPS_output_idx = 0;
     }
 
-    #ifdef debugMode
+    #ifdef debug_APPS
     Serial.print("Throttle from DAC: "); Serial.println(_APPS_out_verify);
     #endif
 }
 
+
 void UTFR_APPS::reportError()
-{
+{   
+    #ifdef debug_APPS               // Will only see these prints when laptop hooked up anyways
     if (!_throttle_good)
         Serial.println("[APPS] Error: throttle values not in expected range of each other.");
     else if (!_output_good)
         Serial.println("[APPS] Error: throttle value was output incorrectly.");
-    else if (!_brakes_good)
-        Serial.println("[APPS] Error: brake pedal failed plausibilty check.");
+    else if (_brake_and_throttle)
+        Serial.println("[APPS] Error: brake pedal and throttle both pressed. Zero torque ouput.");
+    #endif
 }
 
 
-void UTFR_APPS::shutDown()
+void UTFR_APPS::shutdown()
 {
-    DAC.analogWrite(0, 0);          // Command zero throttle to inverter
-    _shutdown = true;
-}
-
-
-bool UTFR_APPS::getShutdownState()
-{
-    return _shutdown;
-}
-
-
-bool UTFR_APPS::confirmShutdown()
-{
-    uint8_t retry_count = 0;
-
-    while(retry_count < _confirm_shutdown_retries)
-    {
-        if (analogRead(A5) == 0)
-        {
-            return true;
-        }
-        else
-        {
-            retry_count += 1;
-        }
-    }
-
-    return false;
-}
-
-
-float UTFR_APPS::getDigital(float voltage){
-  return map_Generic(voltage, 0.0, 5.0, 0.0, static_cast<float>(_kANALOG_MAX));
+    DAC.analogWrite(0, 0);                                  // Command zero torque to inverter
+    HW_digitalWrite(HW_PIN_MEGA_MICRO_3_DIGITAL, true);     // Tell Mega of pedal implausibility
+    _shutdown = true;                                       // Car will not exit shutdown state in this case
 }

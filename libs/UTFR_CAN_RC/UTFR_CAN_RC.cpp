@@ -339,16 +339,8 @@ void UTFR_CAN_RC::receiveMsgs(uint8_t nodeNumber)
         while (CAN_MSGAVAIL == _NODE2.checkReceive())                         // iterate over all pending messages
         {
             _NODE2.readMsgBufID(&canID, &dataLength, buf);  
-
-            if (canID == 0x1B0) 
-            {
-                std::copy(buf + 0, buf + dataLength, _CAN_msgArray[CAN_MSG_RF0].msgData);  // higher speed performance, takes more memory to load std lib   
-                _CAN_msgArray[CAN_MSG_RF0].isDirty = true;
-            }
-            else
-            {
-                receiveMsgsCommonFcn(canID, dataLength, buf);
-            }
+            receiveMsgsCommonFcn(canID, dataLength, buf);
+            
         }
     }
     // ALL NODES ---------------------------------------------------
@@ -584,4 +576,17 @@ void UTFR_CAN_RC::printMsgData(CAN_msgNames_E msgName)
     }
 
     Serial.println(" }");
+}
+
+
+/*!
+* @brief    Checks if this message has been received since last getField
+*
+* @param[in]        msgName    Name of message, defined in _CAN_msgArray
+*
+* @return  true - msg received since last getField, false - msg not received
+*/
+bool UTFR_CAN_RC::msgDirty(CAN_msgNames_E msgName)
+{
+    return _CAN_msgArray[msgName].isDirty;
 }

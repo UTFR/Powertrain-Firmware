@@ -1,49 +1,27 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-#include <SoftwareSerial.h>
+#include "UTFR_PIN_DRIVER_MICRO.h"
 #include "UTFR_APPS.h"
 #include "UTFR_RTD_MICRO.h"
+
+#include <SoftwareSerial.h>
 
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-// TO DO: Replace all of these with pin driver!
+#define debug_RC_Micro              // Uncomment for debug serial prints
 
-#define HW_PIN_MSCOM1 2     // Receive Zero Torque interrupt from Mega on this pin
-#define HW_PIN_MSCOM2 3     // Receive other interrupt from Mega on this pin
-#define HW_PIN_MSCOM4 4
-#define HW_PIN_MSCOM5 5
-#define HW_PIN_MSCOM3 6     // Send zero torque confirmation 
-                            // OR tell Mega of APPS fault on this pin
-                            // OR send RTD signal on this pin
-                            // Depending on carState
-
-#define HW_PIN_THROTTLE_OUT A5
-
-#define HW_PIN_DAC_CS 7
-
-#define HW_PIN_MEGA_TX 10
-#define HW_PIN_MEGA_RX 13
-
-
-
-/******************************************************************************
- *         F U N C T I O N   D E C L A R A T I O N S                          *
- *****************************************************************************/
- 
 
 /******************************************************************************
  *              D A T A   D E F I N I T I O N S                               * 
  *****************************************************************************/
 //--------- State Machine -------------
-enum carState_E                         // TO DO: Implement getting states from Mega (some inferred from digital pins)
-{                                       // i.e. Send state whenever it changes
+enum carState_E
+{                             
   CAR_STATE_INIT = 0,
   CAR_STATE_DRIVE,
-  CAR_STATE_ZERO_TORQUE,
-  CAR_STATE_OFF,
 };
 
 carState_E carState = CAR_STATE_INIT;
@@ -51,22 +29,29 @@ carState_E carState = CAR_STATE_INIT;
 //------- Class Instantiation ---------
 UTFR_RTD_MICRO RTD;
 UTFR_APPS APPS;
-SoftwareSerial megaSerial(HW_PIN_MEGA_TX, HW_PIN_MEGA_RX);      // Currently unused
+SoftwareSerial megaSerial(Micro_HW_pins[HW_PIN_MEGA_MICRO_TX].pinNum,         // Port currently unused due to unreliability during interrupts
+                          Micro_HW_pins[HW_PIN_MEGA_MICRO_RX].pinNum); 
 
 
 /******************************************************************************
  *                         I S R   D E F I N I T I O N S                      *
  *****************************************************************************/
-void sendZeroTorqueISR()
-{
-  carState = CAR_STATE_ZERO_TORQUE;
-}
 
 
 /******************************************************************************
  *                     F U N C T I O N S                                      *
  *****************************************************************************/
-
+void toggleAPPS_ISR()                   // Enables or disables APPS output based on state of car (flips state)
+{
+  if (carState == CAR_STATE_INIT)
+  {
+    carState = CAR_STATE_DRIVE;
+  }
+  if (carState == CAR_STATE_DRIVE)
+  {
+    carState = CAR_STATE_INIT;
+  }
+}
 
 /******************************************************************************
  *                    P R O G R A M   E X E C U T I O N                       *
@@ -74,30 +59,37 @@ void sendZeroTorqueISR()
 void setup() {
 
   Serial.begin(9600);
-  while(!Serial){}
+  while(!Serial){}                          // Wait for serial port to initialize
+
+//------- Pin Setup -------------------
+  HW_setupPins();
   
 // -------- APPS -----------------------
-  APPS.begin(HW_PIN_DAC_CS);
+  APPS.begin(Micro_HW_pins[HW_PIN_CS_APPS].pinNum);
 
 // -------- Serial comms ---------------
-  megaSerial.begin(9600);
+  megaSerial.begin(9600);                   // Port currently unused due to unreliability during interrupts
 
 //--------- Setup Interrupts -----------
-  attachInterrupt(digitalPinToInterrupt(HW_PIN_MSCOM1), sendZeroTorqueISR, RISING);   // Recieving INT from Mega on MS_COM4
-  pinMode(HW_PIN_MSCOM3, OUTPUT);     // Send INT to Mega on MS_COM3
+  attachInterrupt(digitalPinToInterrupt(Micro_HW_pins[HW_PIN_MEGA_MICRO_2_DIGITAL].pinNum),
+                  toggleAPPS_ISR, RISING);                     
 }
 
 void loop() {
-//--------- Ready to Drive Loop --------
-  while(carState == CAR_STATE_INIT)
-  {
-     RTD.confirmReady(analogRead(HW_PIN_THROTTLE_OUT));
-  }
 
-//--------- Main Drive Loop ------------
-  while(carState == CAR_STATE_DRIVE)
+  switch(carState)
   {
-    APPS.processThrottlePosition();
-  }
 
+//===========================================================================  
+    case CAR_STATE_INIT:
+//===========================================================================  
+// ------------ APPS outputs disabled, waiting for Mega input --------------- 
+      RTD.confirmReady();               // Constantly checks brake and throttle inputs and updates a pin indicating this to the Mega 
+
+//===========================================================================  
+    case CAR_STATE_DRIVE:
+//===========================================================================  
+// ------------ APPS outputs enabled ----------------------------------------
+      APPS.processThrottlePosition();   // Note: library alerts Mega of APPS implausibility errors, don't have to do that here   
+  }
 }

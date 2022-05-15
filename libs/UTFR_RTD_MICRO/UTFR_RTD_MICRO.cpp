@@ -2,67 +2,54 @@
 
 UTFR_RTD_MICRO::UTFR_RTD_MICRO()
 {
-    // Initialize Pins
-    pinMode(MEGA_OUT_PIN, OUTPUT);
-    pinMode(BRAKE_IN_PIN, INPUT);
-    digitalWrite(MEGA_OUT_PIN, LOW);
-
-#ifdef debugMode
-    Serial.println("RTD instantiated correctly on micro.");
-#endif
 }
 
-bool UTFR_RTD_MICRO::confirmReady(int throttle)
+bool UTFR_RTD_MICRO::confirmReady()
 {
-
     int check_counter = 0;
     while (check_counter < kCHECK_COUNTER_)
     {
-        if (!checkThrottle(throttle))
+        if (!checkThrottle())
         {
-            #ifdef debugMode
+            #ifdef debug_RTD_Micro
             Serial.println("UTFR_RTD_MICRO::confirmReady: Throttle Invalid, returning False");
             #endif
-            digitalWrite(MEGA_OUT_PIN, LOW);
+            HW_digitalWrite(HW_PIN_MEGA_MICRO_5_DIGITAL, false);
             return false;
         }
 
         if (!checkBrake())
         {
-            #ifdef debugMode
+            #ifdef debug_RTD_Micro
             Serial.println("UTFR_RTD_MICRO::confirmReady: Brake Invalid, returning False");
             #endif
-            digitalWrite(MEGA_OUT_PIN, LOW);
+            HW_digitalWrite(HW_PIN_MEGA_MICRO_5_DIGITAL, false);
             return false;
         }
         check_counter++;
     }
 
-    digitalWrite(MEGA_OUT_PIN, HIGH);
-    #ifdef debugMode
+    HW_digitalWrite(HW_PIN_MEGA_MICRO_5_DIGITAL, true);
+    #ifdef debug_RTD_Micro
     Serial.println("UTFR_RTD_MICRO::confirmReady: RTD ready, set MEGA_OUT_PIN HIGH");
     #endif
     return true;
 }
 
-bool UTFR_RTD_MICRO::checkThrottle(int throttle)
+bool UTFR_RTD_MICRO::checkThrottle()
 {
-    #ifdef throttleCheck
-    if (throttle > kTHROTTLE_THRESHOLD_)
+    if (HW_analogRead(HW_PIN_APPS_OUT) > kTHROTTLE_THRESHOLD_)
     {
         return false;
     }
-    #endif
     return true;
 }
 
 bool UTFR_RTD_MICRO::checkBrake()
 {
-    #ifdef brakeCheck
-    if ((analogRead(A2) < kBRAKE_THRESHOLD_)) //TODO - map to human readable values
+    if (HW_analogRead(HW_PIN_BRAKE_IN) < kBRAKE_THRESHOLD_)
     {
         return false;
     }
-    #endif
     return true;
 }

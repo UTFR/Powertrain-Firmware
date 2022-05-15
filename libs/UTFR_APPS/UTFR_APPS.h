@@ -1,10 +1,11 @@
 #include "MCP_DAC.h"
+#include "UTFR_PIN_DRIVER_MICRO.h"
 #include "lib_util.h"
 
 #ifndef _UTFR_APPS_H_
 #define _UTFR_APPS_H_
 
-#define debugMode         // Uncomment this line to enable debug prints
+#define debug_APPS         // Uncomment this line to enable debug prints
 
 #define GET_DEV(x, y) abs(2*(x-y)/(x+y+0.0001))
 
@@ -18,10 +19,7 @@ class UTFR_APPS {
         UTFR_APPS(uint8_t dataOut = 255, uint8_t clock = 255);
         void begin(int CS);
         void processThrottlePosition();
-        int getThrottlePosition();              // returns _APPS_output
-        void shutDown();
-        bool getShutdownState();                // returns true if shutdown() function has been called        
-        bool confirmShutdown();                 // returns true if output of DAC is 0
+        void shutdown();                        // Called when implausibility check failed for >100ms, cannot exit this state
 
 
     private:
@@ -37,33 +35,28 @@ class UTFR_APPS {
                                                         // Therefore, Composition is advantageous over inheritance for safety and performance reasons
 
         const int _kANALOG_MAX = 1023;
-        const float _kAPPS_1_HIGH = 4.75;     
-        const float _kAPPS_2_HIGH = 5.00;      
-        const float _kAPPS_1_LOW = 0;       
-        const float _kAPPS_2_LOW = 0;      
 
-        const uint8_t _kTIME_ALLOWANCE = 100;           // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
-        const float _kTHROTTLE_MAX_DEVIATION = 0.10;    // DO NOT CHANGE: Rule T.4.2.4
-        const float _kBRAKE_THRESHOLD = 2.5;           // (units of V) determine experimentally
-        const float _kBRAKE_DEVIATION = 0.25;          // DO NOT CHANGE: Rule EV.5.7.1
-        const float _kOUTPUT_MAX_DEVIATION = 0.10;          // ** TO DO: Determine **
+        const uint8_t _kTIME_ALLOWANCE = 100;               // DO NOT CHANGE: Maximum error time allowed by rules; milliseconds
+        const float _kTHROTTLE_MAX_DEVIATION = 0.10;        // DO NOT CHANGE: Rule T.4.2.4
+        const float _kBRAKE_THRESHOLD = 200;                // TO DO: calibrate pedal input (EV.5.7.1)
+        const float _kTHROTTLE_WHILE_BRAKE_LIMIT = 0.25;    // DO NOT CHANGE: Rule EV.5.7.1
+        const float _kOUTPUT_MAX_DEVIATION = 0.10;          // TO DO: calibrate
         const int _kBASE_TIME = -1; 
         const uint8_t _confirm_shutdown_retries = 20;
 
-        float _APPS_1_high = 750.0;            // These will be the digital conversions of the constant voltage values above        
-        float _APPS_2_high = 700.0;            // Used to calculate APPS_output
+        float _APPS_1_high = 750.0;                
+        float _APPS_2_high = 700.0;            
         float _APPS_1_low = 5.0;
         float _APPS_2_low = 26.0; 
         float _Brake_threshold = 0;
 
-        int _DAC_CS = 7;
         float _Brake_in = 0;
         float _APPS_1_in = 0;
         float _APPS_2_in = 0;                             // 0 - 1023
         int _APPS_output = 0;
 
         int _APPS_output_array[kAPPS_OUTPUT_ARRAY_SIZE]; //Output window
-        int _APPS_output_idx;
+        int _APPS_output_idx = 0;
 
         int _APPS_out_verify = 0;                       // 0 - 1023
         float _APPS_1_throttle = 0.0;
@@ -75,16 +68,12 @@ class UTFR_APPS {
         bool _output_good = false;
         bool _exceed_time_allowance = false;
         bool _error_flag_set = false;
-        bool _brakes_good = false;
+        bool _brake_and_throttle = false;               // True to disable outputs temporarily when brake and throttle pressed
 
-
-        bool _shutdown = false;
+        bool _shutdown = false;                         // Flipped to disable outputs permenantly when pedal implausibility                   
 
         void sendOutput(void);
         void reportError(void);
-        int roundOutput(float value);
-        float getDigital(float voltage);                // gets 10-bit digital representation of voltage
-
 };
 
 #endif

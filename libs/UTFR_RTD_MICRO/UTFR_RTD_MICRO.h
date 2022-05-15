@@ -2,18 +2,15 @@
  *                              I N C L U D E S                               *
  *****************************************************************************/
 #include <Arduino.h>
-#include "UTFR_RTD_MICRO_CONFIG.h"
+#include "UTFR_PIN_DRIVER_MICRO.h"
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-
 #ifndef _UTFR_RTD_MICRO_H_
 #define _UTFR_RTD_MICRO_H_
 
-// Pins:
-#define MEGA_OUT_PIN 6
-#define BRAKE_IN_PIN A2 
+//#define debug_RTD_Micro                       // uncomment for debug prints
 
 class UTFR_RTD_MICRO
 {
@@ -25,26 +22,25 @@ public:
      *  @returns True if throttle and brake are ready for RTD for
      *           for more than kCHECK_COUNTER_ loops.
      */
-    bool confirmReady(int throttle);
+    bool confirmReady(void);
 
 private:
     /*! Check Throttle Input
-     *  @param[in] throttle position
      *  @returns True if throttle is below kTHROTTLE_THRESHOLD_,
      *           false otherwise
      */
-    bool checkThrottle(int throttle);
+    bool checkThrottle(void);
 
     /*! Check Brake Input
      *  @returns True if Brake is above kBRAKE_THRESHOLD_,
      *           false otherwise
      */
-    bool checkBrake();
+    bool checkBrake(void);
 
     int kCHECK_COUNTER_ = 5;       // Number of loops that each condition must be met
                                    // for RTD
-    int kBRAKE_THRESHOLD_ = 95;   // Brake threshold for active RTD
-    int kTHROTTLE_THRESHOLD_ = 10; // Throttle threshold for active RTD
+    int kBRAKE_THRESHOLD_ = 95;   // Brake threshold for active RTD             TO DO: calibrate these
+    int kTHROTTLE_THRESHOLD_ = 10; // Throttle threshold for active RTD         TO DO: calibrate these
 };
 
 #endif

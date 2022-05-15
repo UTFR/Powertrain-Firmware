@@ -36,17 +36,20 @@
 #define ER_COOLANT_PRESSURE_F 2
 #define ER_COOLANT_FLOW_F     3
 
-// RF0 - Right Front corner module CAN message 0
-#define RF_OUT_TIRE_TEMP_F  1               // 1st field
-#define RF_CTR_TIRE_TEMP_F  2               // 2nd field
-#define RF_INR_TIRE_TEMP_F  3               // etc...
-#define RF_ROTOR_TEMP_F     4
+
+// Inverter State Message
+#define INV_VSM_STATE_F                 1
+#define INV_PWM_FREQ_F                  2
+#define INV_INV_STATE_F                 3
+#define INV_REALY_STATE_F               4
+#define INV_RUN_MODE_DISCHARGE_STATE_F  5
+
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
 {                                          
     CAN_MSG_ER0,
     CAN_MSG_ER1,
-    CAN_MSG_RF0,
+    CAN_MSG_INV_INTERNAL_STATE,
     
     CAN_MSG_COUNT
 };
@@ -123,17 +126,17 @@ class UTFR_CAN_RC
                 .isRx = false,
                 .isDirty = false,
             },
-            [CAN_MSG_RF0] = 
+            [CAN_MSG_INV_INTERNAL_STATE] = 
             {
-                .msgID = 0x1B4,
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF,                         
-                            0xFF, 0xFF, 0xFF, 0xFF},                
-                .msgFields = {RF_OUT_TIRE_TEMP_F, RF_OUT_TIRE_TEMP_F, 
-                              RF_CTR_TIRE_TEMP_F, RF_CTR_TIRE_TEMP_F,
-                              RF_INR_TIRE_TEMP_F, RF_INR_TIRE_TEMP_F,
-                              RF_ROTOR_TEMP_F,    RF_ROTOR_TEMP_F},
-                .isTx = true,
-                .isRx = false,
+                .msgID = 0x0AA,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {INV_VSM_STATE_F,   INV_PWM_FREQ_F, 
+                              INV_INV_STATE_F, INV_REALY_STATE_F,
+                              INV_RUN_MODE_DISCHARGE_STATE_F,     UNUSED_F,
+                              UNUSED_F,        UNUSED_F},
+                .isTx = false,
+                .isRx = true,
                 .isDirty = false,
             },
         };
@@ -141,15 +144,16 @@ class UTFR_CAN_RC
 
         unsigned long _CAN_filterArray[CAN_MASK_FILTER_COUNT] =         // Define the filters you want to apply to incoming messages here
         {
-            [CAN_MASK_0] = 0b00000000000,               // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
-            [CAN_MASK_1] = 0b00000000000,               // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
+            // Configured to accept only the inverter internal state message
+            [CAN_MASK_0] = 0b11111111111,             // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
+            [CAN_MASK_1] = 0b11111111111,             // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
 
-            [CAN_FILTER_0] = 0b00000000000,
-            [CAN_FILTER_1] = 0b00000000000,
-            [CAN_FILTER_2] = 0b00000000000,
-            [CAN_FILTER_3] = 0b00000000000,
-            [CAN_FILTER_4] = 0b00000000000,
-            [CAN_FILTER_5] = 0b00000000000
+            [CAN_FILTER_0] = 0x0AA,
+            [CAN_FILTER_1] = 0x0AA,
+            [CAN_FILTER_2] = 0x0AA,
+            [CAN_FILTER_3] = 0x0AA,
+            [CAN_FILTER_4] = 0x0AA,
+            [CAN_FILTER_5] = 0x0AA
         }; 
 
         //    ----------------- Filter-Mask Truth Table ------------------------------    
@@ -200,9 +204,7 @@ class UTFR_CAN_RC
         unsigned long getField(CAN_msgNames_E msgName, uint8_t fieldName);          // Get data from field by name (defined at top of this file)
         void setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData);   // Set field data by name, pass in data you want to set as well
         void printMsgData(CAN_msgNames_E msgName);                                  // Prints all data stored in a given message (Note: will be in decimal format)
-
-        // TO DO: Functions that return void should return error_types defined in an enum. Makes debug easier.
-            // Done by Kelvin in UTFR_ERROR.h ?
+        bool msgDirty(CAN_msgNames_E msgName);                                      // Checks if this message has been received since last getField
 
 
     /******************************************************************************

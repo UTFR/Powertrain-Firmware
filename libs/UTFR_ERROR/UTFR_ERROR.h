@@ -13,15 +13,16 @@
 
 //#define debugMode
 
-enum errorNAMES_E { //All possible types of errors
-  BMS_OVERTEMP,
-  BMS_UNDERVOLT,
-  APPS_MISMATCH,
-  APPS_OUTPUT,
-  SDC_TRIPPED,
-  COOLANT_OVERTEMP,
-  COOLANT_PRESSURE,
-  COOLANT_FLOW,
+enum errorNames_E {   //All possible types of errors
+  ERR_NONE,
+  ERR_BMS_OVERTEMP,
+  ERR_BMS_UNDERVOLT,
+  ERR_APPS_MISMATCH,
+  ERR_APPS_OUTPUT,
+  ERR_SDC_TRIPPED,
+  ERR_COOL_OVERTEMP,
+  ERR_COOL_NOPRESS,
+  ERR_COOL_NOFLOW,
 };
 
 class UTFR_ERROR{
@@ -31,14 +32,14 @@ class UTFR_ERROR{
      *
      * @param[in] error Type of error to send, from errorNAMES_E enum.
      */
-    void sendError(UTFR_CAN_RC& error_node, errorNAMES_E error);
+    void sendError(UTFR_CAN_RC& CAN, errorNames_E error);
 
   private:
     //<---------------- GLOBAL CLASS VARIABLES ------------------->
 
     const uint8_t error_map_[2][8] = { //using 0xFF to represent empty fields, 0x00 to represent active fields
-      {BMS_OVERTEMP, BMS_UNDERVOLT, APPS_MISMATCH, APPS_OUTPUT, SDC_TRIPPED, 0xFF, 0xFF, 0xFF},
-      {COOLANT_OVERTEMP, COOLANT_PRESSURE, COOLANT_FLOW, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+      {ERR_BMS_OVERTEMP, ERR_BMS_UNDERVOLT, ERR_APPS_MISMATCH, ERR_APPS_OUTPUT, ERR_SDC_TRIPPED, 0xFF, 0xFF, 0xFF},
+      {ERR_COOL_OVERTEMP, ERR_COOL_NOPRESS, ERR_COOL_NOFLOW, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
     };
 };
 #endif
