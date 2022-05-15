@@ -5,6 +5,7 @@
 - "CAN-BUS Shield" by Seeed Studio, *V1.0.0*
 - "MCP_DAC" by Rob Tillaart, *V0.1.6*
 - "TimerOne" by Paul Stoffregen, *V1.1.0*
+- "TimerThree" by Paul Stoffregen, *V1.1.0*
 - "FastLED" by Daniel Garcia, "V3.5.0"
 
 
