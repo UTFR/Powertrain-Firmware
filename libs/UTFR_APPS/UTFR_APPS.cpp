@@ -17,11 +17,13 @@ void UTFR_APPS::begin(int CS){
     pinMode(A2, INPUT);                 // _Brake_in pin
     pinMode(A5, INPUT);                 // APPS_Out_Analog
 
-    _APPS_1_high = getDigital(_kAPPS_1_HIGH);
+    /*_APPS_1_high = getDigital(_kAPPS_1_HIGH);
     _APPS_1_low = getDigital(_kAPPS_1_LOW);
     _APPS_2_high = getDigital(_kAPPS_2_HIGH);
     _APPS_2_low = getDigital(_kAPPS_2_LOW);
-    _Brake_threshold = getDigital(_kBRAKE_THRESHOLD);
+    _Brake_threshold = getDigital(_kBRAKE_THRESHOLD);*/ 
+    
+    //Doesn't seem to be consistent with the board, let's hardcode once the entire board is together
 
     _DAC_CS = CS;
     DAC.begin(CS);
@@ -33,30 +35,55 @@ void UTFR_APPS::processThrottlePosition()
     // read in the voltage values and convert to digital
     _APPS_1_in = analogRead(A0);
     _APPS_2_in = analogRead(A1);
+
+    //Automatic calibration - TESTING ONLY
+    #ifdef debugMode
+    if (_APPS_1_in > _APPS_1_high) {
+        _APPS_1_high = _APPS_1_in;
+    }
+    if (_APPS_2_in > _APPS_2_high) {
+        _APPS_2_high = _APPS_2_in;
+    }
+    if (_APPS_1_in < _APPS_1_low) {
+        _APPS_1_low = _APPS_1_in;
+    }
+    if (_APPS_2_in < _APPS_2_low) {
+        _APPS_2_low = _APPS_2_in;
+    }
+    Serial.print("APPS_1_Low : ");Serial.print(_APPS_1_low);Serial.print("APPS_1_High : ");Serial.println(_APPS_1_high);
+    Serial.print("APPS_2_Low : ");Serial.print(_APPS_2_low);Serial.print("APPS_2_High : ");Serial.println(_APPS_2_high);
+    #endif
+    
     _Brake_in = analogRead(A2);
     _APPS_out_verify = analogRead(A5);
 
     #ifdef debugMode
-    Serial.print("Throttle out of DAC: "); Serial.println(_APPS_out_verify);
+    Serial.print("Throttle into DAC: "); Serial.println(_APPS_output);
     #endif
 
     // Normalize pedal position readings and multiply by _kANALOG_MAX so we can compare them
+    
     _APPS_1_throttle = map_Generic(_APPS_1_in, _APPS_1_low, _APPS_1_high, 0.0, static_cast<float>(_kANALOG_MAX)); 
     _APPS_2_throttle = map_Generic(_APPS_2_in, _APPS_2_low, _APPS_2_high, 0.0, static_cast<float>(_kANALOG_MAX));
 
     #ifdef debugMode
+    Serial.print("APPS_1_in: "); Serial.println(_APPS_1_in);
+    Serial.print("APPS_2_in: "); Serial.println(_APPS_2_in);
     Serial.print("APPS_1_throttle: "); Serial.println(_APPS_1_throttle);
     Serial.print("APPS_2_throttle: "); Serial.println(_APPS_2_throttle);
     #endif
 
 
     // set flags
-    _brakes_good = ( (_Brake_in > _kBRAKE_THRESHOLD) && 
-                    ((_APPS_out_verify/_kANALOG_MAX > _kBRAKE_DEVIATION) || 
-                    (_APPS_output /_kANALOG_MAX > _kBRAKE_DEVIATION)) 
-                    );
-    _throttle_good = GET_DEV(_APPS_1_throttle, _APPS_2_throttle) < _kTHROTTLE_MAX_DEVIATION;
-    _output_good = GET_DEV(_APPS_output, _APPS_out_verify) < _kOUTPUT_DEVIATION;
+    _brakes_good = (_Brake_in > _kBRAKE_THRESHOLD); // && 
+                    //((_APPS_out_verify/_kANALOG_MAX > _kBRAKE_DEVIATION) ||  
+                    //(_APPS_output /_kANALOG_MAX > _kBRAKE_DEVIATION)) 
+                    //);
+
+                    // ^ What are these for?
+
+    _throttle_good = (_APPS_1_throttle - _APPS_2_throttle) < static_cast<float>(_kANALOG_MAX)*_kTHROTTLE_MAX_DEVIATION; 
+    _output_good = (_APPS_output - _APPS_out_verify) < static_cast<float>(_kANALOG_MAX)*_kOUTPUT_MAX_DEVIATION; //Changed both to a percent of total range
     _error_flag_set = (_time_at_error != _kBASE_TIME);
 
     //=========OUTPUT PROCESSING==========//
@@ -109,7 +136,18 @@ int UTFR_APPS::getThrottlePosition()
 
 void UTFR_APPS::sendOutput()
 {
-    _APPS_output = round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // Take average and round
+
+    _APPS_output_array[_APPS_output_idx] = static_cast<float>(_kANALOG_MAX) - round((_APPS_1_throttle + _APPS_2_throttle) / 2);      // Take average and round
+
+    for (int idx_offset = 0; idx_offset < kLOW_PASS_WINDOW-1; ++idx_offset) {
+        int curr_idx = _APPS_output_idx - idx_offset;
+        if (curr_idx < 0) {
+            curr_idx = kAPPS_OUTPUT_ARRAY_SIZE + curr_idx;
+        }
+        _APPS_output += _APPS_output_array[curr_idx]; 
+    }
+
+    _APPS_output = (_APPS_output / kLOW_PASS_WINDOW);
 
     if (_shutdown == true)              // Ensures 0 throttle after shutdown() called (redundant on purpose) 
     {                                               
@@ -118,8 +156,14 @@ void UTFR_APPS::sendOutput()
     
     DAC.analogWrite(_APPS_output, 0);
 
+    ++_APPS_output_idx;
+
+    if (_APPS_output_idx >=  kAPPS_OUTPUT_ARRAY_SIZE) {
+        _APPS_output_idx = 0;
+    }
+
     #ifdef debugMode
-    Serial.print("Throttle into DAC: "); Serial.println(_APPS_output);
+    Serial.print("Throttle from DAC: "); Serial.println(_APPS_out_verify);
     #endif
 }
 
