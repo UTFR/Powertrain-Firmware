@@ -38,6 +38,8 @@
  *                     P R I V A T E   F U N C T I O N S                      *
  *****************************************************************************/
 
+static void app_failedPrecharge(void);
+static bool app_doPrecharge(void);
 
 /******************************************************************************
  *                      P U B L I C   F U N C T I O N S                       *
@@ -265,7 +267,64 @@ void app_benchSelfTest(void) // only to be used on the bench with NO high voltag
   
 }
 
+void app_failedPrecharge(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
+{
+  HW_digitalWrite(HW_PIN_SDC_EN, false);
+  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);
+}
 
+bool app_doPrecharge(void)
+{
+  
+  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) < 2.5) || (HW_readMux(HW_MUX_PRECHARGE_DONE) > 2.5) || (IO_getRelayState(IO_RELAY_PRECHARGE) != IO_RELAY_SAFE))
+  {
+    // FAILURE: off-state signals are incorrect
+    app_failedPrecharge();
+    return false;
+  }
+  
+  int startTime = millis();
+  IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_ENERGIZED);
+  while ((millis() - startTime) < 3500) // Precharge takes about 3.5 seconds, tested in lab. Time can be reduced by placing another resistor in parallel.
+  {
+    // Do nothing. Wait for precharge to complete
+  }
+
+  // Check precharge signals
+  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) > 2.5))
+  {
+    // FAILURE: system not detected to be energized
+    app_failedPrecharge();
+    return false;
+  }
+  if ((HW_readMux(HW_MUX_PRECHARGE_DONE) < 2.5))
+  {
+    // FAILURE: system not detected to be precharged
+    app_failedPrecharge();
+    return false;
+  }
+  if ((HW_readMux(HW_MUX_PRECHARGE_CONDUCTING) > 2.5))
+  {
+    // FAILURE: precharge relay detected to be not conducting
+    app_failedPrecharge();
+    return false;
+  }
+
+  // All good up until this point. Precharge is complete, activate main contactor
+  IO_setRelayState(IO_RELAY_AIRP, IO_RELAY_ENERGIZED);
+  IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_SAFE);
+  delay(100);
+  if (!((IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && (IO_getRelayState(IO_RELAY_PRECHARGE) == IO_RELAY_SAFE)))
+  {
+    // FAILURE: incorrect relay states at end of precharge
+    app_failedPrecharge();
+    return false;
+  }
+
+  // Success
+  return true;
+    
+}
 
 /******************************************************************************
  *                    P R O G R A M   E X E C U T I O N                       *
@@ -274,13 +333,14 @@ void app_benchSelfTest(void) // only to be used on the bench with NO high voltag
 void setup() {
   Serial.begin(9600);
   Serial.println("ACM booting up");
-
   HW_setupPins();
-  app_benchSelfTest();
+  HW_digitalWrite(HW_PIN_SDC_EN, true);
+  //app_benchSelfTest();
+  
 }
 
-
 void loop() {
-  
+
+
 
 }
