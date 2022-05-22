@@ -67,8 +67,8 @@ void BMS_heartbeatISR(void);
  *****************************************************************************/
 void shutdownCar(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
 {
-  carState = CAR_STATE_SHUTDOWN;                // TO DO: What does ACM do in this state? 
-  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);
+  carState = CAR_STATE_SHUTDOWN;                // TO DO: make sure ACM needs to do nothing in this state
+  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);   // Rear Controller (Mega) will sense this and cut off power to all other LV electronics
   HW_digitalWrite(HW_PIN_SDC_EN, false);
 }
 
@@ -376,4 +376,12 @@ void loop() {
         CAN.receiveMsgs(1);                       // TO DO: Update to correct node number (BMS node)
       }
   }
+
+//=========================================================================== 
+    case CAR_STATE_SHUTDOWN:
+//===========================================================================
+      #ifdef debug_ACM
+      Serial.println("ACM in shutdown state.");
+      #endif
+      delay(1000);
 }
