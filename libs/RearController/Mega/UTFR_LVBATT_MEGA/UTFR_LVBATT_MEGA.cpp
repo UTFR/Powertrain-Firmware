@@ -1,17 +1,17 @@
-#include "UTFR_LVBATT.h"
+#include "UTFR_LVBATT_MEGA.h"
 
-UTFR_LVBATT::UTFR_LVBATT()
+UTFR_LVBATT_MEGA::UTFR_LVBATT_MEGA()
 {
 }
 
-void UTFR_LVBATT::readBattVoltage(void)
+void UTFR_LVBATT_MEGA::readBattVoltage(void)
 {
     _readVoltage = map_Generic(static_cast<float>(HW_analogRead(HW_PIN_BMS_CHARGE_MEGA_ANALOG)), _lowVoltRaw, _highVoltRaw, 
                                                                                               _lowVolt, _highVolt);
     _readVoltage += _measured_analog_error;
 }
 
-void UTFR_LVBATT::readBattTemps()
+void UTFR_LVBATT_MEGA::readBattTemps()
 {
     float temp1 = map_Generic(static_cast<float>(HW_analogRead(HW_PIN_BMS_TEMP_ANALOG_1)), _lowTempRaw, _highTempRaw, 
                                                                                         _lowTemp, _highTemp);  
@@ -29,7 +29,7 @@ void UTFR_LVBATT::readBattTemps()
 }
 
 
-bool UTFR_LVBATT::checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR)
+bool UTFR_LVBATT_MEGA::checkLVBatt(UTFR_CAN_MEGA& CAN)
 {
     /* Old way of muxing thru individual cells, not used now  (mux fucked)
     for (_cell = 0; _cell<_total_cells; _cell++)        // Check cell voltages
@@ -55,7 +55,7 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR)
         Serial.println("BMS UNDERVOLTAGE ERROR");
         #endif
         
-        ERROR.sendError(CAN, ERR_BMS_UNDERVOLT);
+        CAN.sendError(ERR_BMS_UNDERVOLT);
         fail = true;
     }
     readBattTemps();                                    // Check battery temps
@@ -65,7 +65,7 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR)
         Serial.println("BMS OVERTEMP ERROR");
         #endif
 
-        ERROR.sendError(CAN, ERR_BMS_OVERTEMP);
+        CAN.sendError(ERR_BMS_OVERTEMP);
         fail = true;
     }
     
@@ -88,7 +88,7 @@ bool UTFR_LVBATT::checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR)
 
  
 /*   Old way of muxing thru individual cells, not used now (mux fucked)
-void UTFR_LVBATT::readCellVoltage(uint8_t muxPin)
+void UTFR_LVBATT_MEGA::readCellVoltage(uint8_t muxPin)
 {
     bool SA_state = (muxPin & _SA_MASK);
 

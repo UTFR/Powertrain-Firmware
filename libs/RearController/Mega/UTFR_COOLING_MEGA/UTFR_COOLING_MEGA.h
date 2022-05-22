@@ -4,27 +4,26 @@
  *****************************************************************************/
 #include <Arduino.h>
 #include "lib_util.h"
-#include "UTFR_CAN_RC.h"
-#include "UTFR_ERROR.h"
+#include "UTFR_CAN_MEGA.h"
 #include "UTFR_PIN_DRIVER_MEGA.h"
 
 /******************************************************************************
  *                              D E F I N E S                                 *
  *****************************************************************************/
-#ifndef _UTFR_COOLING_H_
-#define _UTFR_COOLING_H_
+#ifndef _UTFR_COOLING_MEGA_H_
+#define _UTFR_COOLING_MEGA_H_
 
 //#define debugMode
 
 /******************************************************************************
  *                              T Y P E D E F S                               *
  *****************************************************************************/
-class UTFR_COOLING
+class UTFR_COOLING_MEGA
 {
   public: 
 
-    UTFR_COOLING();                                                 // Constructor
-    bool checkCoolingLoop(UTFR_CAN_RC& CAN, UTFR_ERROR& ERRORS);   // Checks if cooling loop parameters are within safe bounds
+    UTFR_COOLING_MEGA();                                   // Constructor
+    bool checkCoolingLoop(UTFR_CAN_MEGA& CAN);          // Checks if cooling loop parameters are within safe bounds
 
   private:
     
@@ -82,9 +81,9 @@ class UTFR_COOLING
     /******************************************************************************
     *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
     *****************************************************************************/
-    bool checkTemp(UTFR_CAN_RC& can);    // Gets coolant temps, stores values in CAN array, returns false if critical overheating
-    bool checkPress(UTFR_CAN_RC& can);   // Gets coolant pressures, returns false if overpressure (stores values in CAN array)
-    bool checkFlow(UTFR_CAN_RC& can);    // Gets coolant flow rate, returns false if pump is ON && no flow, true otherwise
+    bool checkTemp(UTFR_CAN_MEGA& can);    // Gets coolant temps, stores values in CAN array, returns false if critical overheating
+    bool checkPress(UTFR_CAN_MEGA& can);   // Gets coolant pressures, returns false if overpressure (stores values in CAN array)
+    bool checkFlow(UTFR_CAN_MEGA& can);    // Gets coolant flow rate, returns false if pump is ON && no flow, true otherwise
 
 };
 #endif

@@ -1,8 +1,8 @@
-#include "UTFR_CAN_RC.h"
+#include "UTFR_CAN_MEGA.h"
 
 
 // Constructor for 1 node
-UTFR_CAN_RC::UTFR_CAN_RC(uint8_t CS1)
+UTFR_CAN_MEGA::UTFR_CAN_MEGA(uint8_t CS1)
 {   
 
     // Initialize CAN nodes
@@ -16,7 +16,7 @@ UTFR_CAN_RC::UTFR_CAN_RC(uint8_t CS1)
 
 
 // Constructor for 2 nodes
-UTFR_CAN_RC::UTFR_CAN_RC(uint8_t CS1, uint8_t CS2)
+UTFR_CAN_MEGA::UTFR_CAN_MEGA(uint8_t CS1, uint8_t CS2)
 {   
 
     // Initialize CAN nodes
@@ -32,7 +32,7 @@ UTFR_CAN_RC::UTFR_CAN_RC(uint8_t CS1, uint8_t CS2)
 
 #ifdef _1_NODE_
 // Starts node - must be called before any other functions
-void UTFR_CAN_RC::begin(uint8_t busSpeed)
+void UTFR_CAN_MEGA::begin(uint8_t busSpeed)
 {   
     bool validSpeed = false; 
 
@@ -63,7 +63,7 @@ void UTFR_CAN_RC::begin(uint8_t busSpeed)
 
 
 // Send all messages where .isTx == true
-void UTFR_CAN_RC::sendAll()
+void UTFR_CAN_MEGA::sendAll()
 {
     uint16_t canID;
 
@@ -80,7 +80,7 @@ void UTFR_CAN_RC::sendAll()
 
 
 // Send message by name
-void UTFR_CAN_RC::sendMsg(CAN_msgNames_E msgName)
+void UTFR_CAN_MEGA::sendMsg(CAN_msgNames_E msgName)
 {
     uint16_t canID;
     canID = static_cast<uint16_t>(_CAN_msgArray[msgName].msgID & 0x0FFFF);   // shortening unsigned long to 16 bits to save memory
@@ -90,7 +90,7 @@ void UTFR_CAN_RC::sendMsg(CAN_msgNames_E msgName)
 
 
 // Receive pending messages and update message data in-place (in _CAN_msgArray)
-void UTFR_CAN_RC::receiveMsgs()               
+void UTFR_CAN_MEGA::receiveMsgs()               
 {
         uint8_t dataLength = 0;
         uint8_t buf[8];
@@ -123,7 +123,7 @@ void UTFR_CAN_RC::receiveMsgs()
 
 
 // Set masks and filters according to CAN_filterArray
-void UTFR_CAN_RC::setFilters()
+void UTFR_CAN_MEGA::setFilters()
 {
     for (uint8_t i=0; i<CAN_MASK_FILTER_COUNT; i++)
     {   
@@ -140,7 +140,7 @@ void UTFR_CAN_RC::setFilters()
 
 
 // Set masks and filters so that all messages sent by other nodes are received
-void UTFR_CAN_RC::setFilters_permitAll()
+void UTFR_CAN_MEGA::setFilters_permitAll()
 {
     _NODE1.init_Mask(0, _ext, 0);
     _NODE1.init_Mask(1, _ext, 0);
@@ -148,7 +148,7 @@ void UTFR_CAN_RC::setFilters_permitAll()
 
 
 // Set masks and filters so that this node receives NO messages
-void UTFR_CAN_RC::setFilters_permitNone()
+void UTFR_CAN_MEGA::setFilters_permitNone()
 {
     for (uint8_t i=0; i<CAN_MASK_FILTER_COUNT; i++)
     {   
@@ -166,7 +166,7 @@ void UTFR_CAN_RC::setFilters_permitNone()
 
 #ifdef _2_NODES_                                                                // This gets defined in 2 node constructor
 // Starts node - must be called before any other functions
-void UTFR_CAN_RC::begin(uint8_t busSpeed, uint8_t nodeNumber)
+void UTFR_CAN_MEGA::begin(uint8_t busSpeed, uint8_t nodeNumber)
 {   
     bool validSpeed = false; 
 
@@ -236,7 +236,7 @@ void UTFR_CAN_RC::begin(uint8_t busSpeed, uint8_t nodeNumber)
 
 
 // Send all messages where .isTx == true
-void UTFR_CAN_RC::sendAll(uint8_t nodeNumber)
+void UTFR_CAN_MEGA::sendAll(uint8_t nodeNumber)
 {
     uint16_t canID;
 
@@ -268,7 +268,7 @@ void UTFR_CAN_RC::sendAll(uint8_t nodeNumber)
 
 
 // Send message by name
-void UTFR_CAN_RC::sendMsg(CAN_msgNames_E msgName, uint8_t nodeNumber)
+void UTFR_CAN_MEGA::sendMsg(CAN_msgNames_E msgName, uint8_t nodeNumber)
 {
     uint16_t canID;
     canID = static_cast<uint16_t>(_CAN_msgArray[msgName].msgID & 0x0FFFF);   // shortening unsigned long to 16 bits to save memory
@@ -293,7 +293,7 @@ void UTFR_CAN_RC::sendMsg(CAN_msgNames_E msgName, uint8_t nodeNumber)
 }
 
 
-void UTFR_CAN_RC::receiveMsgsCommonFcn(unsigned long canID, uint8_t dataLength, uint8_t buf[8])
+void UTFR_CAN_MEGA::receiveMsgsCommonFcn(unsigned long canID, uint8_t dataLength, uint8_t buf[8])
 {
     for (uint8_t msgIdx=0; msgIdx<CAN_MSG_COUNT; msgIdx++)          // find matching ID and update that msgData with received data 
     {                                                               // iterating should be fine as each MCU handles very few unique msgs (<10)
@@ -317,7 +317,7 @@ void UTFR_CAN_RC::receiveMsgsCommonFcn(unsigned long canID, uint8_t dataLength, 
 
 
 // Receive pending messages and update message data in-place (in _CAN_msgArray)
-void UTFR_CAN_RC::receiveMsgs(uint8_t nodeNumber)               
+void UTFR_CAN_MEGA::receiveMsgs(uint8_t nodeNumber)               
 {
         uint8_t dataLength = 0;
         uint8_t buf[8];
@@ -361,7 +361,7 @@ void UTFR_CAN_RC::receiveMsgs(uint8_t nodeNumber)
 
 
 // Set masks and filters according to CAN_filterArray
-void UTFR_CAN_RC::setFilters(uint8_t nodeNumber)
+void UTFR_CAN_MEGA::setFilters(uint8_t nodeNumber)
 {
     for (uint8_t i=0; i<CAN_MASK_FILTER_COUNT; i++)
     {   
@@ -409,7 +409,7 @@ void UTFR_CAN_RC::setFilters(uint8_t nodeNumber)
 
 
 // Set masks and filters so that all messages sent by other nodes are received
-void UTFR_CAN_RC::setFilters_permitAll(uint8_t nodeNumber)
+void UTFR_CAN_MEGA::setFilters_permitAll(uint8_t nodeNumber)
 {
     // NODE 1 ------------------------------------------------------
     if (nodeNumber == 1)
@@ -436,7 +436,7 @@ void UTFR_CAN_RC::setFilters_permitAll(uint8_t nodeNumber)
 
 
 // Set masks and filters so that this node receives NO messages
-void UTFR_CAN_RC::setFilters_permitNone(uint8_t nodeNumber)
+void UTFR_CAN_MEGA::setFilters_permitNone(uint8_t nodeNumber)
 {
     for (uint8_t i=0; i<CAN_MASK_FILTER_COUNT; i++)
     {   
@@ -482,18 +482,39 @@ void UTFR_CAN_RC::setFilters_permitNone(uint8_t nodeNumber)
         }
     }
 }
+
+
+void UTFR_CAN_MEGA::sendError(errorNames_E error)
+{
+    for (uint8_t msgIndex = 0; msgIndex < CAN_MSG_COUNT; msgIndex++) {
+        for (uint8_t fieldIndex = 0; fieldIndex < 8; fieldIndex++) {
+            if (error_map[msgIndex][fieldIndex] == error) {
+                setField(msgIndex, fieldIndex, 0x00);
+                sendMsg(msgIndex, 2);                                   // Node 2 is on the DAQ bus 
+                #ifdef debugMode
+                Serial.print("UTFR_ERROR::sendError: Set Error at Msg Idx ");
+                Serial.print(msgIndex);
+                Serial.print(" with Field Idx ");
+                Serial.print(fieldIndex);
+                #endif
+                return;
+            }
+        }
+    }
+    Serial.print("UTFR_ERROR::sendError: inputted error name not found in error map");
+}
 #endif
 
 /*!
 * @brief    Get data field by name.
 *
 * @param[in]        msgName    Name of message, defined in _CAN_msgArray
-* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_RC_version.h
+* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_MEGA_version.h
 *
 * @return    unsigned long     Data of gotten field
 *
 */
-unsigned long UTFR_CAN_RC::getField(CAN_msgNames_E msgName, uint8_t fieldName)
+unsigned long UTFR_CAN_MEGA::getField(CAN_msgNames_E msgName, uint8_t fieldName)
 {
     long fieldData = 0;                                             // unsigned long is 4 bytes - assumes no field is longer than this
     uint8_t fieldIndex = 0;                                         // fieldIndex: tracks loop position in field data
@@ -526,11 +547,11 @@ unsigned long UTFR_CAN_RC::getField(CAN_msgNames_E msgName, uint8_t fieldName)
 * @brief    Set data field by name.
 *
 * @param[in]        msgName    Name of message, defined in _CAN_msgArray
-* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_RC_version.h
+* @param[in]        fieldName  Name of field, defined at top of UTFR_CAN_MEGA_version.h
 * @param[in]        fieldData  The data you want to copy into the field
 *
 */
-void UTFR_CAN_RC::setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData)
+void UTFR_CAN_MEGA::setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData)
 {
     unsigned long fieldMask = 0xFF;
     uint8_t fieldIndex = 0;
@@ -562,7 +583,7 @@ void UTFR_CAN_RC::setField(CAN_msgNames_E msgName, uint8_t fieldName, long field
 
 
 // Prints all data stored in a given message (Note: will be in decimal format)
-void UTFR_CAN_RC::printMsgData(CAN_msgNames_E msgName)
+void UTFR_CAN_MEGA::printMsgData(CAN_msgNames_E msgName)
 {
     Serial.print("Message "); Serial.print(msgName); Serial.print(" data: { ");
 
@@ -586,7 +607,7 @@ void UTFR_CAN_RC::printMsgData(CAN_msgNames_E msgName)
 *
 * @return  true - msg received since last getField, false - msg not received
 */
-bool UTFR_CAN_RC::msgDirty(CAN_msgNames_E msgName)
+bool UTFR_CAN_MEGA::msgDirty(CAN_msgNames_E msgName)
 {
     return _CAN_msgArray[msgName].isDirty;
 }

@@ -1,8 +1,7 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-#include "UTFR_CAN_RC.h"        // TO DO: Add this entire library to CAN library
-#include "UTFR_ERROR.h"
+#include "UTFR_CAN_MEGA.h"        // TO DO: Add this entire library to CAN library
 #include "UTFR_PIN_DRIVER_MEGA.h"
 #include "lib_util.h"
 
@@ -10,13 +9,13 @@
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
-#ifndef _UTFR_LVBATT_H_
-#define _UTFR_LVBATT_H_
+#ifndef _UTFR_LVBATT_MEGA_H_
+#define _UTFR_LVBATT_MEGA_H_
 
 //#define debug_LVBatt           // Uncomment this line for debug prints
 
 
-class UTFR_LVBATT
+class UTFR_LVBATT_MEGA
 {     
     private:
 
@@ -67,15 +66,15 @@ class UTFR_LVBATT
         *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
         *****************************************************************************/
 
-        //void readCellVoltage(uint8_t muxPin);              // Checks a single cell voltage     
+        //void readCellVoltage(uint8_t muxPin);             // Checks a single cell voltage     
         void readBattVoltage(void);
         void readBattTemps(void);                                          
 
 
     public:
 
-        UTFR_LVBATT();                                          // Constructor
-        bool checkLVBatt(UTFR_CAN_RC& CAN, UTFR_ERROR& ERROR);  // Check if LV battery voltages and temps are in safe range
+        UTFR_LVBATT_MEGA();                                      // Constructor
+        bool checkLVBatt(UTFR_CAN_MEGA& CAN);                 // Check if LV battery voltages and temps are in safe range
 };
 
 #endif

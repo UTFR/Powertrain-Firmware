@@ -1,15 +1,15 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-#include "UTFR_COOLING.h"
+#include "UTFR_COOLING_MEGA.h"
 
 
-UTFR_COOLING::UTFR_COOLING() 
+UTFR_COOLING_MEGA::UTFR_COOLING_MEGA() 
 {
 }
 
 // Gets coolant temps, stores values in CAN array, returns false if critical overheating
-bool UTFR_COOLING::checkTemp(UTFR_CAN_RC& can){
+bool UTFR_COOLING_MEGA::checkTemp(UTFR_CAN_MEGA& can){
 
     float motor_in_temp_analog = HW_analogRead(HW_PIN_COOL_TEMP_MTR_IN_ANALOG);
     float motor_out_temp_analog = HW_analogRead(HW_PIN_COOL_TEMP_MTR_OUT_ANALOG);
@@ -91,7 +91,7 @@ bool UTFR_COOLING::checkTemp(UTFR_CAN_RC& can){
 }
 
 // Gets coolant pressures, returns false if overpressure (stores values in CAN array)
-bool UTFR_COOLING::checkPress(UTFR_CAN_RC& can){
+bool UTFR_COOLING_MEGA::checkPress(UTFR_CAN_MEGA& can){
 
     float motor_in_pressure_analog = HW_analogRead(HW_PIN_COOL_PSR_MTR_IN_ANALOG);
     float motor_out_pressure_analog = HW_analogRead(HW_PIN_COOL_PSR_MTR_OUT_ANALOG);
@@ -162,7 +162,7 @@ bool UTFR_COOLING::checkPress(UTFR_CAN_RC& can){
 }
 
 // Gets coolant flow rate, returns false if pump is ON && no flow, true otherwise
-bool UTFR_COOLING::checkFlow(UTFR_CAN_RC& can){
+bool UTFR_COOLING_MEGA::checkFlow(UTFR_CAN_MEGA& can){
     float motor_in_flow_analog = HW_analogRead(HW_PIN_FLOW_RATE_MTR_ANALOG);
     float motor_in_flow = map_Generic(
         motor_in_flow_analog,
@@ -196,23 +196,23 @@ bool UTFR_COOLING::checkFlow(UTFR_CAN_RC& can){
     return true;
 }
 
-bool UTFR_COOLING::checkCoolingLoop(UTFR_CAN_RC& CAN, UTFR_ERROR& ERRORS)
+bool UTFR_COOLING_MEGA::checkCoolingLoop(UTFR_CAN_MEGA& CAN)
 {
     if (!checkTemp(CAN))                            // Returns true if in safe range, turns on pumps if over a certain temp threshold (Ask Cristian)          
     { 
-        ERRORS.sendError(CAN, ERR_COOL_OVERTEMP);    // TO DO: Make sure this error type exists. Add if not.                                   
+        CAN.sendError(ERR_COOL_OVERTEMP);           // TO DO: Make sure this error type exists. Add if not.                                   
         return false;                 
     }
             
     if (!checkPress(CAN))                           // returns false also if pump is ON && pressure is too low/zero
     {
-        ERRORS.sendError(CAN, ERR_COOL_NOPRESS);     // TO DO: Make sure this error type exists. Add if not.  
+        CAN.sendError(ERR_COOL_NOPRESS);            // TO DO: Make sure this error type exists. Add if not.  
         return false;
     }
     
     if (!checkFlow(CAN))                           
     {
-        ERRORS.sendError(CAN, ERR_COOL_NOFLOW);      // TO DO: Make sure this error type exists. Add if not.
+        CAN.sendError(ERR_COOL_NOFLOW);             // TO DO: Make sure this error type exists. Add if not.
         return false;
     }
 

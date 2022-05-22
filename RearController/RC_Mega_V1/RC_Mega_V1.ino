@@ -2,10 +2,9 @@
  *                              I N C L U D E S                               *
  *****************************************************************************/
 #include "UTFR_PIN_DRIVER_MEGA.h"
-#include "UTFR_CAN_RC.h"
-#include "UTFR_ERROR.h"
-#include "UTFR_COOLING.h"
-#include "UTFR_LVBATT.h"
+#include "UTFR_CAN_MEGA.h"
+#include "UTFR_COOLING_MEGA.h"
+#include "UTFR_LVBATT_MEGA.h"
 
 #include <TimerOne.h>         
 #include <TimerThree.h>
@@ -39,15 +38,14 @@ enum invState_E                     // From the Cascadia Motion Software User Ma
 };
 invState_E invState = INV_STATE_START; 
 
-errorNames_E errState = ERR_NONE;   // Gets updated when errors happen 
+errorNames_E errState = ERR_NONE;   // TO DO: Gets updated when errors happen 
                                     // --> Mainly so correct action can be taken in shutdown sequence
                                     
 //------- Class Instantiation ---------
-UTFR_CAN_RC CAN(Mega_HW_pins[HW_PIN_CS_CAN_1].pinNum,       // Node 1 is on the powertrain CANbus
-                Mega_HW_pins[HW_PIN_CS_CAN_2].pinNum);      // Node 2 is on the DAQ CANbus      
-UTFR_ERROR ERRORS;                      
-UTFR_COOLING COOLING;
-UTFR_LVBATT LVBATT;
+UTFR_CAN_MEGA CAN(Mega_HW_pins[HW_PIN_CS_CAN_1].pinNum,       // Node 1 is on the powertrain CANbus
+                Mega_HW_pins[HW_PIN_CS_CAN_2].pinNum);      // Node 2 is on the DAQ CANbus                  
+UTFR_COOLING_MEGA COOLING;
+UTFR_LVBATT_MEGA LVBATT;
 
 //--------- Ignition ------------------
 const int preIgnDelay = 1000;        // How long to check cooling loop before ignition (ms)
@@ -58,6 +56,13 @@ const int prechargeDelay = 10000;    // How long to wait for ACM to confirm prec
 unsigned long prechargeStart;   
 const int microRTDDelay = 10000;     // How long to wait for pedal inputs to be confirmed by Micro (ms) 
 unsigned long microRTDStart;
+
+//--------- Inverter ------------------
+const uint8_t invMaxTempIGBT = 65;          // TO DO: confirm these values. Degrees celsius.
+const uint8_t invMaxTempGateDriver = 65;
+const uint8_t invMaxTempCoolant = 65; 
+const uint8_t invMaxTempHotspot = 75;      
+const uint8_t invMaxTempMotor = 65;
                            
 //--------- CAN -----------------------
 const int CANPollRate = 20000;      // Check powertrain CAN node for new messages every 'CANPollRate' microseconds (10^-6)
@@ -95,7 +100,15 @@ void microInterruptMegaISR()                  // called once micro has set MS_CO
 
 void sdcCheckISR()
 {                                             // TO DO: Change to the right pin for shunt resistor sensing
-  sdcState = (HW_digitalRead(HW_PIN_SDC_CURRENT_ANALOG) == HIGH);       
+  sdcState = (HW_digitalRead(HW_PIN_SDC_CURRENT_ANALOG) == HIGH);
+  
+  if(!sdcState)                               // If SDC has been tripped
+  {
+    #ifdef debug_RC_Mega
+    Serial.println("Shutdown circuit tripped. Mega shutting down.");
+    #endif
+    shutdownSequence();
+  }
 }
 
 void CANRxISR()                               // Receive messages off powertrain CANBus if they're waiting
@@ -140,6 +153,80 @@ void shutdownSequence(void)                             // This is a function be
     Serial.println("Car off. Must power cycle to exit this state.");  // TO DO: Make this state exitable in some cases
     delay(1000);                                                      //         --> Set carState and break to do so
   }                                                                   
+}
+
+void updateInvState(void)           // Updates global invState, checks important temperatures
+{
+  if(CAN.msgDirty(CAN_MSG_INV_INTERNAL_STATE))      // If we received a new inverter internal state message
+  {
+    invState = CAN.getField(CAN_MSG_INV_INTERNAL_STATE, INV_VSM_STATE_F); 
+    if (invState == INV_STATE_FAULT)                // If fault state, shutdown car
+    {
+      #ifdef debug_RC_Mega
+      Serial.print("PRECHARGE  Want: Inverter state 4. Current state: "); 
+      Serial.println(invState);
+      #endif
+                                                    // TO DO: Send inverter fault error msg to datalogger
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+  }
+
+  if(CAN.msgDirty(CAN_MSG_INV_TEMPS_1))           // Check all fields in Inverter Temps #1 message
+  {
+    if( (CAN.getField(CAN_MSG_INV_TEMPS_1, INV_IGBT_A_TEMP_F) > (invMaxTempIGBT*10)) ||  // Check IGBT temperatures
+        (CAN.getField(CAN_MSG_INV_TEMPS_1, INV_IGBT_B_TEMP_F) > (invMaxTempIGBT*10)) ||  // *10 to match inverter format
+        (CAN.getField(CAN_MSG_INV_TEMPS_1, INV_IGBT_C_TEMP_F) > (invMaxTempIGBT*10)))
+    {
+      #ifdef debug_RC_Mega                                                    // TO DO: Add error msg send for this case
+      Serial.println("Inverter IGBT too hot. Shutting down.");
+      #endif
+
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+
+    if(CAN.getField(CAN_MSG_INV_TEMPS_1, INV_GATE_DRIVER_TEMP_F) > (invMaxTempGateDriver*10))
+    {
+      #ifdef debug_RC_Mega                                                    // TO DO: Add error msg send for this case
+      Serial.println("Inverter gate driver board too hot. Shutting down.");
+      #endif
+
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+  }
+
+  if(CAN.msgDirty(CAN_MSG_INV_TEMPS_3))           // Check all fields in Inverter Temps #3 message
+  {
+    if(CAN.getField(CAN_MSG_INV_TEMPS_3, INV_COOLANT_TEMP_F) > (invMaxTempCoolant*10))
+    {
+      #ifdef debug_RC_Mega                        // TO DO: Add error msg send for this case
+      Serial.println("Inverter coolant too hot (from Temps 3 CAN msg). Shutting down.");
+      #endif
+
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+    if(CAN.getField(CAN_MSG_INV_TEMPS_3, INV_HOTSPOT_TEMP_F) > (invMaxTempHotspot*10))
+    {
+      #ifdef debug_RC_Mega                        // TO DO: Add error msg send for this case
+      Serial.println("Inverter hotspot too hot (from Temps 3 CAN msg). Shutting down.");
+      #endif
+
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+    if(CAN.getField(CAN_MSG_INV_TEMPS_3, INV_MOTOR_TEMP_F) > (invMaxTempMotor*10))
+    {
+      #ifdef debug_RC_Mega                        // TO DO: Add error msg send for this case
+      Serial.println("Inverter detected motor too hot (from Temps 3 CAN msg). Shutting down.");
+      #endif
+
+      carState = CAR_STATE_SHUTDOWN;
+      return;
+    }
+  }
 }
 
 
@@ -198,20 +285,17 @@ void loop()
 //==========================================================================    
     case CAR_STATE_IGNITION:
 //==========================================================================
-//------- Start pumps, check cooling loop, inverter ignition ---------------
-    
-      HW_digitalWrite(HW_PIN_PUMP_DIGITAL, HIGH);           // Turn on pumps
-      delay(500);                                           // Delay so pressures and flow rate stabilize
+//------- Check cooling loop, inverter ignition ----------------------------
   
       preIgnStart = millis();                               // Make sure cooling loop is in safe state
       while((millis() - preIgnStart) < preIgnDelay)         // Must check multiple times for unsafe state to be confirmed if it exists
       {                 
-        if(!COOLING.checkCoolingLoop(CAN, ERRORS))          // Note: Error msg sending done in library
+        if(!COOLING.checkCoolingLoop(CAN))                  // Note: Error msg sending done in library
         {
           carState = CAR_STATE_INIT;
           break;
         }
-        if(!LVBATT.checkLVBatt(CAN, ERRORS))                // If LVBatt error, car should be shutdown
+        if(!LVBATT.checkLVBatt(CAN))                        // If LVBatt error, car should be shutdown
         {
           carState = CAR_STATE_SHUTDOWN;                    // Note: Error msg sending done in library
           break;
@@ -251,29 +335,15 @@ void loop()
     case CAR_STATE_PRECHARGE:
 //==========================================================================
 //------ Precharge Sequence ------------------------------------------------
-
-      int invState_read = -69; 
       
-      while(invState_read != INV_STATE_WAIT)              // Wait for inverter to be in the wait state (wait state == ready for precharge)
+      while((invState != INV_STATE_WAIT) &&
+            (invState != INV_STATE_FAULT))            // When inverter in wait state --> ready for precharge
       {
-        if(CAN.msgDirty(CAN_MSG_INV_INTERNAL_STATE))      // If we received inverter internal state message
-        {
-          invState_read = CAN.getField(CAN_MSG_INV_INTERNAL_STATE, INV_VSM_STATE_F);    // Get inverter state and set variable for loop condition 
-          if (invState_read == INV_STATE_FAULT)           // If fault state, shutdown car
-          {
-            #ifdef debug_RC_Mega
-            Serial.print("PRECHARGE  Want: Inverter state 4. Current state: "); 
-            Serial.println(invState_read);
-            #endif
-                                                          // TO DO: Send inverter fault error msg to datalogger
-            carState = CAR_STATE_SHUTDOWN;
-            break;
-          }
-        }
+        updateInvState();
         
         #ifdef debug_RC_Mega
         Serial.print("PRECHARGE  Want: Inverter state 4. Current state: "); 
-        Serial.println(invState_read);
+        Serial.println(invState);
         #endif
       }
 
@@ -326,26 +396,14 @@ void loop()
       HW_digitalWrite(HW_PIN_FORWARD_ENABLE_DIGITAL, HIGH);   // Tell inverter to enter running state by setting these 2 pins
       HW_digitalWrite(HW_PIN_BRAKE_DIGITAL, HIGH);
 
-      while(invState_read != INV_STATE_RUNNING)               // Wait for inverter to be in the RUNNING state
+      while((invState != INV_STATE_RUNNING) &&
+            (invState != INV_STATE_FAULT))                    // Wait for inverter to be in the RUNNING state
       {
-        if(CAN.msgDirty(CAN_MSG_INV_INTERNAL_STATE))          // If we received inverter internal state message
-        {
-          invState_read = CAN.getField(CAN_MSG_INV_INTERNAL_STATE, INV_VSM_STATE_F);    // Get inverter state and set loop condition variable 
-          if (invState_read == INV_STATE_FAULT)               // If fault state, shutdown car
-          {
-            #ifdef debug_RC_Mega
-            Serial.print("PRECHARGE  Want: Inverter state 6. Current state: "); 
-            Serial.println(invState_read);
-            #endif
-                                                              // TO DO: Send inverter fault error msg to datalogger
-            carState = CAR_STATE_SHUTDOWN;
-            break;
-          }
-        }
+        updateInvState();
         
         #ifdef debug_RC_Mega
         Serial.print("PRECHARGE  Want: Inverter state 6. Current state: "); 
-        Serial.println(invState_read);
+        Serial.println(invState);
         #endif
       }
 
@@ -362,7 +420,7 @@ void loop()
 //------ Main Drive Loop --------------
     case CAR_STATE_DRIVE:
       
-      if(!COOLING.checkCoolingLoop(CAN, ERRORS))            // Check state of cooling loop      
+      if(!COOLING.checkCoolingLoop(CAN))                    // Check state of cooling loop      
       {
         #ifdef debug_RC_Mega
         Serial.println("Cooling loop check failed.");
@@ -372,7 +430,7 @@ void loop()
         break;                                              // Note: Error msg sending done in library
       }
         
-      if(!LVBATT.checkLVBatt(CAN, ERRORS))
+      if(!LVBATT.checkLVBatt(CAN))
       { 
         #ifdef debug_RC_Mega
         Serial.println("LVBatt check failed.");
@@ -382,21 +440,15 @@ void loop()
         break;
       }
 
-      if(CAN.msgDirty(CAN_MSG_INV_INTERNAL_STATE))          // Check for inverter fault if we received inverter internal state message
+      updateInvState();
+      if(invState != INV_STATE_RUNNING)
       {
-        invState_read = CAN.getField(CAN_MSG_INV_INTERNAL_STATE, INV_VSM_STATE_F);    // Get inverter state and set loop condition variable 
-        if (invState_read == INV_STATE_FAULT)               // If fault state, shutdown car
-        {
-          #ifdef debug_RC_Mega
-          Serial.println("Inverter fault. Shutting down car."); 
-          #endif
-                                                            // TO DO: Send inverter fault error msg to datalogger
-          carState = CAR_STATE_SHUTDOWN;
-          break;
-        }
-      }                                                     // TO DO: Add checks for other inverter message fields 
-                                                            // --> Copy 'if(CAN.msgDirty(CAN_MSG_INV_INTERNAL_STATE))' block for other msg
-
+        #ifdef debug_RC_Mega
+        Serial.println("Car in drive state, inverter not in running state. Shutting down.");
+        #endif
+        carState = CAR_STATE_SHUTDOWN;
+        break;                              // Break out of case block to run shutdown sequence
+      }
       
       // TO DO: Send powertrain sensor data & relevant inverter data to datalogger
   

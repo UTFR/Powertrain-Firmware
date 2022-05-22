@@ -202,7 +202,7 @@ HW_pin_S Mega_HW_pins[HW_PIN_COUNT] =
         .pinNum = 30,
         .isOutput = true,
         .activeLow = false,
-        .physicalState = false,
+        .physicalState = true,          // Pumps should be on as soon as Mega gets power
     },
 
     [HW_PIN_FAN_L_DIGITAL] =

@@ -9,8 +9,8 @@
  *                              D E F I N E S                                 *
  *****************************************************************************/
 
-#ifndef _UTFR_CAN_RC_H_
-#define _UTFR_CAN_RC_H_
+#ifndef _UTFR_CAN_MEGA_H_
+#define _UTFR_CAN_MEGA_H_
 
 //#define debugMode                         // Uncomment this line to enable debug prints
 
@@ -24,17 +24,31 @@
 #define UNUSED_F 0                          // Define your message data fields here so you can access them by name later
 
 // ER0 - Error CAN Message 0 (LV BMS, APPS, SDC)
-#define ER_BMS_OVERTEMP_F  1
-#define ER_BMS_UNDERVOLT_F 2
-#define ER_APPS_MISMATCH_F 3
-#define ER_APPS_OUTPUT_F   4
-#define ER_SDC_TRIPPED_F   5
+#define ER_BMS_OVERTEMP_F   1
+#define ER_BMS_UNDERVOLT_F  2
+#define ER_APPS_MISMATCH_F  3
+#define ER_APPS_OUTPUT_F    4
+#define ER_SDC_TRIPPED_F    5
 
 
 // ER1 - Error CAN Message 1 (Coolant Loop)
-#define ER_COOLANT_OVERTEMP_F 1
-#define ER_COOLANT_PRESSURE_F 2
-#define ER_COOLANT_FLOW_F     3
+#define ER_COOLANT_OVERTEMP_F   1
+#define ER_COOLANT_PRESSURE_F   2
+#define ER_COOLANT_FLOW_F       3
+
+
+// Inverter Temps #1
+#define INV_IGBT_A_TEMP_F       1
+#define INV_IGBT_B_TEMP_F       2
+#define INV_IGBT_C_TEMP_F       3
+#define INV_GATE_DRIVER_TEMP_F  4
+
+
+// Inverter Temps #3
+#define INV_COOLANT_TEMP_F  1
+#define INV_HOTSPOT_TEMP_F  2
+#define INV_MOTOR_TEMP_F    3
+#define INV_TORQUE_SHUD_F   4
 
 
 // Inverter State Message
@@ -45,18 +59,41 @@
 #define INV_RUN_MODE_DISCHARGE_STATE_F  5
 
 
+
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
 {                                          
     CAN_MSG_ER0,
     CAN_MSG_ER1,
+    CAN_MSG_INV_TEMPS_1,
+    CAN_MSG_INV_TEMPS_3,
     CAN_MSG_INV_INTERNAL_STATE,
     
     CAN_MSG_COUNT
 };
 
+
+enum errorNames_E 
+{                                           // Define all error types here
+  ERR_NONE,
+  ERR_BMS_OVERTEMP,
+  ERR_BMS_UNDERVOLT,
+  ERR_APPS_MISMATCH,
+  ERR_APPS_OUTPUT,
+  ERR_SDC_TRIPPED,
+  ERR_COOL_OVERTEMP,
+  ERR_COOL_NOPRESS,
+  ERR_COOL_NOFLOW,
+};
+
+const uint8_t error_map[2][8] =             // Using 0xFF to represent empty fields, 0x00 to represent active errors
+{           
+      {ERR_BMS_OVERTEMP, ERR_BMS_UNDERVOLT, ERR_APPS_MISMATCH, ERR_APPS_OUTPUT, ERR_SDC_TRIPPED, 0xFF, 0xFF, 0xFF},
+      {ERR_COOL_OVERTEMP, ERR_COOL_NOPRESS, ERR_COOL_NOFLOW, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+};
+
 // ----------------------------------------------------------------------------------------------------->>
 
-class UTFR_CAN_RC
+class UTFR_CAN_MEGA
 {   
 
     private:
@@ -126,6 +163,32 @@ class UTFR_CAN_RC
                 .isRx = false,
                 .isDirty = false,
             },
+            [CAN_MSG_INV_TEMPS_1] = 
+            {
+                .msgID = 0x0A0,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {INV_IGBT_A_TEMP_F,      INV_IGBT_A_TEMP_F, 
+                              INV_IGBT_B_TEMP_F,      INV_IGBT_B_TEMP_F,
+                              INV_IGBT_C_TEMP_F,      INV_IGBT_C_TEMP_F,
+                              INV_GATE_DRIVER_TEMP_F, INV_GATE_DRIVER_TEMP_F},
+                .isTx = false,
+                .isRx = true,
+                .isDirty = false,
+            },
+            [CAN_MSG_INV_TEMPS_3] = 
+            {
+                .msgID = 0x0A2,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {INV_COOLANT_TEMP_F,     INV_COOLANT_TEMP_F, 
+                              INV_HOTSPOT_TEMP_F,     INV_HOTSPOT_TEMP_F,
+                              INV_MOTOR_TEMP_F,       INV_MOTOR_TEMP_F,
+                              INV_TORQUE_SHUD_F,      INV_TORQUE_SHUD_F},
+                .isTx = false,
+                .isRx = true,
+                .isDirty = false,
+            },
             [CAN_MSG_INV_INTERNAL_STATE] = 
             {
                 .msgID = 0x0AA,
@@ -144,16 +207,16 @@ class UTFR_CAN_RC
 
         unsigned long _CAN_filterArray[CAN_MASK_FILTER_COUNT] =         // Define the filters you want to apply to incoming messages here
         {
-            // Configured to accept only the inverter internal state message
-            [CAN_MASK_0] = 0b11111111111,             // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
-            [CAN_MASK_1] = 0b11111111111,             // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
+            // TO DO: Configured to accept only critical inverter messages, add more for inverter datalogging
+            [CAN_MASK_0] = 0b11111110000,             // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
+            [CAN_MASK_1] = 0b11111110000,             // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
 
-            [CAN_FILTER_0] = 0x0AA,
-            [CAN_FILTER_1] = 0x0AA,
-            [CAN_FILTER_2] = 0x0AA,
-            [CAN_FILTER_3] = 0x0AA,
-            [CAN_FILTER_4] = 0x0AA,
-            [CAN_FILTER_5] = 0x0AA
+            [CAN_FILTER_0] = 0x0A0,
+            [CAN_FILTER_1] = 0x0A0,
+            [CAN_FILTER_2] = 0x0A0,
+            [CAN_FILTER_3] = 0x0A0,
+            [CAN_FILTER_4] = 0x0A0,
+            [CAN_FILTER_5] = 0x0A0
         }; 
 
         //    ----------------- Filter-Mask Truth Table ------------------------------    
@@ -177,8 +240,8 @@ class UTFR_CAN_RC
     *          P U B L I C   F U N C T I O N   D E C L A R A T I O N S            *
     ******************************************************************************/
     public:
-        UTFR_CAN_RC(uint8_t CS1);                                                      // Constructor for one node
-        UTFR_CAN_RC(uint8_t CS1, uint8_t CS2);                                         // Constructor for two nodes
+        UTFR_CAN_MEGA(uint8_t CS1);                                                      // Constructor for one node
+        UTFR_CAN_MEGA(uint8_t CS1, uint8_t CS2);                                         // Constructor for two nodes
 
         #ifdef _1_NODE_
         void begin(uint8_t busSpeed);                                               // Initialize CAN node
@@ -199,6 +262,7 @@ class UTFR_CAN_RC
         void setFilters(uint8_t nodeNumber);                                        // set masks and filters according to CAN_filterArray
         void setFilters_permitAll(uint8_t nodeNumber);                              // set masks and filters to receive ALL messages sent by other nodes
         void setFilters_permitNone(uint8_t nodeNumber);                             // set masks and filters to receive NO messages sent by other nodes
+        void sendError(errorNames_E error);                                         // Sends error messages by name
         #endif
 
         unsigned long getField(CAN_msgNames_E msgName, uint8_t fieldName);          // Get data from field by name (defined at top of this file)
