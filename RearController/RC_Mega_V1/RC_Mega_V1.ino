@@ -411,6 +411,8 @@ void loop()
       {
         break;                     // if inverter doesn't transition to RUNNING state successfully, shutdown car (break out of switch block)
       }
+
+      HW_digitalWrite(HW_PIN_BRAKE_DIGITAL, LOW);           // Turn digital brake signal off during running
   
       HW_digitalWrite(HW_PIN_MEGA_MICRO_2_DIGITAL, HIGH);   // MICRO Tell micro to enable APPS outputs
       delay(100);
