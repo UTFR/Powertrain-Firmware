@@ -21,7 +21,7 @@ bool checkBoardTemps(UTFR_CAN_ACM &CAN)
 {
   float temp_1 = getTempInCelsius(HW_readMux(HW_MUX_PCB_TEMP_1));
   float temp_2 = getTempInCelsius(HW_readMux(HW_MUX_PCB_TEMP_2));
-  float temp_3 = getTempInCelsius(HW_readMux(HW_MUX_PCB_TEMP_3));
+  float temp_3 = 0.0;   //   This thermistor is broken (according to Jake)
   float temp_4 = getTempInCelsius(HW_readMux(HW_MUX_PCB_TEMP_4));
 
   //CAN.setField();                 // TO DO: Store temps in CAN array here
