@@ -45,10 +45,7 @@
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
 {     
-    CAN_MSG_THERM_BROADCAST,                // Thermistor to BMS Broadcast
-    CAN_MSG_THERM_GENERAL,                  // Thermistor General Broadcase
-    CAN_MSG_THERM_LEGACY,                   // Legacy Reserved field that's required for monitoring to work
-
+    CAN_MSG_THERM_BROADCAST,
     CAN_MSG_COUNT
 };
 
@@ -65,12 +62,12 @@ class UTFR_CAN_TEMP
         uint8_t _CS1;                               // Chip Select Pin for node 1 (Initialized by constructor)
         uint8_t _CS2;                               // Chip Select Pin for node 2 (Initialized by constructor)
         uint8_t _busSpeed;                          // bus speed, pre-defined values in "mcp_can_dfs.h"
-        bool _ext = false;                          // Extended format? 11-bit ID for normal format, 29-bit ID for extended
+        bool _ext = false;                           // Extended format? 11-bit ID for normal format, 29-bit ID for extended
 
         struct CAN_msg_S                            // Don't change this. Structure of a single CAN message.
         {                      
             const unsigned long msgID;              // 11-bit identifier for normal format, 29-bit identifier for extended format
-            volatile uint8_t msgData[8];            // 8-byte data payload. Volatile because can be changed in ISR.
+            volatile unsigned char msgData[8];      // 8-byte data payload. Volatile because can be changed in ISR.
             const uint8_t msgFields[8];             // What is each byte of the payload? --> Use defined field names at top of file
             const bool isTx;                        // true if message is transmitted
             const bool isRx;                        // true if message is received
@@ -100,46 +97,17 @@ class UTFR_CAN_TEMP
         {                                                   // Error messages need to be first to work with the CAN Library
             [CAN_MSG_THERM_BROADCAST] =         
             {
-                .msgID = 0x1839F380, //TBD
+                .msgID = 0x0B0, //TBD
                 .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
                             0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {THERM_BROADCAST_MODULE_NUM,  THERM_BROADCAST_LOWEST_VAL, 
-                              THERM_BROADCAST_HIGHEST_VAL, THERM_BROADCAST_AVG_VAL,
-                              THERM_BROADCAST_NUM_ENABLED,     THERM_BROADCAST_HIGHEST_ID,
-                              THERM_BROADCAST_LOWEST_ID,     THERM_BROADCAST_CHECKSUM},
-                .isTx = true,
-                .isRx = false,
-                .isDirty = false,
-            },
-        
-            [CAN_MSG_THERM_GENERAL] =         
-            {
-                .msgID = 0x1838F380, //TBD
-                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
-                            0xFF, 0xFF, 0xFF, 0xFF},
-                .msgFields = {THERM_GENERAL_ID_MSB,  THERM_GENERAL_ID_LSB, 
-                              THERM_GENERAL_VAL, THERM_GENERAL_NUM_ENABLED,
-                              THERM_GENERAL_LOWEST_VAL,     THERM_GENERAL_HIGHEST_VAL,
-                              THERM_GENERAL_HIGHEST_ID,     THERM_GENERAL_LOWEST_ID},
-                .isTx = true,
-                .isRx = false,
-                .isDirty = false,
-            },
-
-            [CAN_MSG_THERM_LEGACY] =         
-            {
-                .msgID = 0x80, //TBD
-                .msgData = {0x05, 0x15, 0x00, 0x9E, 
-                            0xFF, 0xFF, 0xFF, 0xFF}, //TODO - Test
-                .msgFields = {UNUSED_F,  UNUSED_F, 
-                              UNUSED_F, UNUSED_F,
+                .msgFields = {THERM_BROADCAST_HIGHEST_VAL,  THERM_BROADCAST_LOWEST_VAL, 
+                              THERM_BROADCAST_AVG_VAL, UNUSED_F,
                               UNUSED_F,     UNUSED_F,
                               UNUSED_F,     UNUSED_F},
                 .isTx = true,
                 .isRx = false,
                 .isDirty = false,
             },
-
         };
 
 
@@ -205,6 +173,7 @@ class UTFR_CAN_TEMP
 
         unsigned long getField(CAN_msgNames_E msgName, uint8_t fieldName);          // Get data from field by name (defined at top of this file)
         void setField(CAN_msgNames_E msgName, uint8_t fieldName, long fieldData);   // Set field data by name, pass in data you want to set as well
+        void calculateChecksum(CAN_msgNames_E msgName);   // Calculate and populate the last checksum field for selected message
 
         void printMsgData(CAN_msgNames_E msgName);  // Prints all data stored in a given message (Note: will be in decimal format)
 
