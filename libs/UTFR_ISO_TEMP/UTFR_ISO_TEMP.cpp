@@ -106,56 +106,74 @@ void UTFR_ISO_TEMP::readMux(uint8_t sensor_id) // these are the outputted select
 
   float total_temp = 0;
   
-  for (muxSelect; muxSelect < 15; muxSelect++) // select #15 is the calibration resistor
+  for (muxSelect; muxSelect < 7 ; muxSelect++) // select #15 is the calibration resistor
   {
-    segmentNumber = determineSegmentNumber(muxSelect);
-    boardNumber = (muxSelect % 3);
+    segmentNumber = segment_lut_[muxSelect];
+    boardNumber = board_lut_[muxSelect];
 
-    digitalWrite(SEL_0_PIN, muxSelect & 0b00001);
-    digitalWrite(SEL_1_PIN, (muxSelect & 0b00010) >> 1);
-    digitalWrite(SEL_2_PIN, (muxSelect & 0b00100) >> 2);
-    digitalWrite(SEL_3_PIN, (muxSelect & 0b01000) >> 3);
-    rawVal = analogRead(T_IN_PIN);
-    measuredVoltage = (5.0) * (rawVal / 1023.0);
-    sensorVoltage = (measuredVoltage - TF_OFFSET)/TF_SLOPE;
-
+    // Sensors that aren't populated
     if ((boardNumber == 1) && (sensor_id == 6))
     {
-      // do nothing, sensor 6 not populated on board 1 (middle board)
+      continue;
     }
-    else
+
+    else if (segmentNumber == 3 && boardNumber == 2 && 
+              (sensor_id == 0 || sensor_id == 2)) {
+      continue;
+    }
+
+    else if (sensor_id == 5 && 
+              ((segmentNumber == 0 && boardNumber == 2) ||
+               (segmentNumber == 2 && boardNumber == 0) ||
+               (segmentNumber == 2 && boardNumber == 1)))
     {
-      current_temp = lookup(sensorVoltage);
-      accum_.segs[segmentNumber].boards[boardNumber].sensors[sensor_id] = current_temp;
-      total_temp += current_temp;
-      ++total_counter;
-      if (current_temp > temps_.highest_temp){
-        temps_.highest_temp = current_temp;
-      }
-      if (current_temp < temps_.lowest_temp){
-        temps_.lowest_temp = current_temp;
-      }
+      continue;
+    }
+
+    digitalWrite(SEL_0_PIN, segments_mux_[muxSelect][0]);
+    digitalWrite(SEL_1_PIN, segments_mux_[muxSelect][1]);
+    digitalWrite(SEL_2_PIN, segments_mux_[muxSelect][2]);
+    digitalWrite(SEL_3_PIN, segments_mux_[muxSelect][3]);
+
+    rawVal = analogRead(T_IN_PIN);
+    measuredVoltage = (5.0) * (static_cast<float>(rawVal) / 1023.0);
+    /*
+    Serial.print("Segment ");
+    Serial.print(segmentNumber);
+    Serial.print(" board ");
+    Serial.print(boardNumber);
+    Serial.print("measured Volt:");
+    Serial.println(measuredVoltage);*/
+    sensorVoltage = (measuredVoltage - TF_OFFSET)/TF_SLOPE;
+
+    current_temp = lookup(sensorVoltage) + LINEAR_TEMP_OFFSET;
+    accum_.segs[segmentNumber].boards[boardNumber].sensors[sensor_id] = current_temp;
+    total_temp += current_temp;
+    ++total_counter;
+    if (current_temp > temps_.highest_temp){
+      temps_.highest_temp = current_temp;
+    }
+    if (current_temp < temps_.lowest_temp){
+      temps_.lowest_temp = current_temp;
     }
   }
-
-  temps_.avg_temp = total_temp/total_counter;
+  temps_.total_temp += total_temp;
+  temps_.total_counter += total_counter;
 }
 
 void UTFR_ISO_TEMP::sensorLoop() {
   // Select a sensor from 0-6
   uint8_t a, b, c;
+  float total_counter = 0;
   resetSegments();
   for (uint8_t sel_out = 0; sel_out < 7; ++sel_out)
   {
-    //Serial.print("CHECKING SEL OUT:");
-    Serial.println(sel_out);
     a = (sel_out & 0b00000001);
     b = (sel_out & 0b00000010) >> 1;
     c = (sel_out & 0b00000100) >> 2;
     digitalWrite(SEL_A_PIN, a);
     digitalWrite(SEL_B_PIN, b);
     digitalWrite(SEL_C_PIN, c);
-
     readMux(sel_out); // this function reads all the on-board multiplexed voltages, and populates arrays with the values.
   }
   this->printSegments();
@@ -170,9 +188,10 @@ void UTFR_ISO_TEMP::resetSegments() {
       {
         accum_.segs[segment].boards[brd].sensors[sensor] = 0;
       }
-      temps_.highest_temp = 0;
+      temps_.highest_temp = -99999;
       temps_.lowest_temp = 999999;
-      temps_.avg_temp = 0;
+      temps_.total_temp = 0;
+      temps_.total_counter = 0;
     }
   }
 }
@@ -181,20 +200,25 @@ void UTFR_ISO_TEMP::printSegments()
 {
   for (int segment = 0; segment < 5; segment++)
   {
-    Serial.print("Segment: ");
-    Serial.print(segment);
-    for (int brd = 0; brd < 3; brd++)
+    if(segment == 3)
     {
-      Serial.print(" board : ");
-      Serial.println(brd);
-      for (int sensor = 0; sensor < 7; sensor++)
+      Serial.print("Segment: ");
+      Serial.print(segment);
+      for (int brd = 0; brd < 3; brd++)
       {
-        Serial.print("Sensor:");
-        Serial.print(sensor);
-        Serial.print(" : ");
-        Serial.println(accum_.segs[segment].boards[brd].sensors[sensor]);
-      }
+        Serial.print(" board : ");
+        Serial.println(brd);
+        for (int sensor = 0; sensor < 7; sensor++)
+        {
+          Serial.print("Sensor:");
+          Serial.print(sensor);
+          Serial.print(" : ");
+          Serial.println(accum_.segs[segment].boards[brd].sensors[sensor]);
+        }
     }
+      
+    }
+    
   }
 
   Serial.print("Highest Temp :");
@@ -204,7 +228,7 @@ void UTFR_ISO_TEMP::printSegments()
   Serial.println(temps_.lowest_temp);
 
   Serial.print("Avg Temp :");
-  Serial.println(temps_.avg_temp);
+  Serial.println(temps_.total_temp/temps_.total_counter);
 }
 
 

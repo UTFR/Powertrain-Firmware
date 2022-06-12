@@ -4,9 +4,9 @@
 #include "Arduino.h"
 
 // Selects for isolated muxes
-#define SEL_A_PIN 1
-#define SEL_B_PIN 0
-#define SEL_C_PIN 3
+#define SEL_A_PIN 7
+#define SEL_B_PIN 8
+#define SEL_C_PIN 2
 
 // Selects for on-board mux
 #define SEL_0_PIN 3
@@ -21,9 +21,10 @@
 #define TF_OFFSET 1.25
 #define TF_SLOPE 0.408
 
+#define LINEAR_TEMP_OFFSET -5 //[deg C]
+
 // Temp lookup board
 #define LUT_LENGTH 33
-
 
 typedef struct isoTemp_S
 {
@@ -44,7 +45,8 @@ typedef struct temp_S
 {
   float highest_temp;
   float lowest_temp;
-  float avg_temp;
+  float total_temp;
+  int total_counter;
 } temp_S;
 
 class UTFR_ISO_TEMP {
@@ -89,6 +91,20 @@ class UTFR_ISO_TEMP {
                         {1.31, 115.0},
                         {1.30, 120.0}
                       };
+
+  int segments_mux_[8][4] = {
+                            {0, 0, 0, 0}, //0F-0
+                            {0, 0, 0, 1}, //0R-2
+                            {1, 1, 0, 0}, //2F-0
+                            {1, 0, 1, 1}, //2M-1
+                            {1, 0, 1, 0}, //3F-0
+                            {1, 1, 0, 1}, //3R-2
+                            {0, 1, 1, 0}, //4M-1
+                            {1, 1, 1, 0}, //4R-2
+                            };
+
+  int segment_lut_[8] = {0, 0, 2, 2, 3, 3, 4, 4};
+  int board_lut_[8] =   {0, 2, 0, 1, 0, 2, 1, 2};                 
 
  public:
 

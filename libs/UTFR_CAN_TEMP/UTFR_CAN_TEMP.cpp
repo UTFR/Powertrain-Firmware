@@ -82,10 +82,6 @@ void UTFR_CAN_TEMP::sendAll()
 // Send message by name
 void UTFR_CAN_TEMP::sendMsg(CAN_msgNames_E msgName)
 {
-    Serial.println(_CAN_msgArray[msgName].msgID);
-    /*uint16_t canID;
-    canID = static_cast<uint16_t>(_CAN_msgArray[msgName].msgID & 0x0FFFF);*/   // shortening unsigned long to 16 bits to save memory
-
     _NODE1.sendMsgBuf(_CAN_msgArray[msgName].msgID, _ext, 8, _CAN_msgArray[msgName].msgData);         // sendMsgBuf(ID, extended format?, data length, data)
 }
 
