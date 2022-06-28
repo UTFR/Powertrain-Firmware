@@ -68,7 +68,7 @@ void shutdownCar(void) // This function disables the shutdown circuit and illumi
   IO_setRelayState(IO_RELAY_AIRN, IO_RELAY_SAFE);
   IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_SAFE);
     
-  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, false);   
+  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);   
   HW_digitalWrite(HW_PIN_SDC_EN, false);        // Rear Controller (Mega) will sense this and cut off power to all other LV electronics
 }
 
@@ -300,7 +300,9 @@ void setup() {
 
   //attachInterrupt(digitalPinToInterrupt(HW_pins[HW_PIN_CAN1_INT].pinNum),     // TO DO: Update to correct pin (should be BMS node)
   //                CAN_msgWaitingISR, LOW);
- 
+
+//-------- SDC ------------------------
+  HW_digitalWrite(HW_PIN_SDC_EN, false);
 }
 
 void loop() {
