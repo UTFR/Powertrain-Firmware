@@ -302,7 +302,7 @@ void setup() {
   //                CAN_msgWaitingISR, LOW);
 
 //-------- SDC ------------------------
-  HW_digitalWrite(HW_PIN_SDC_EN, false);
+  HW_digitalWrite(HW_PIN_SDC_EN, true);
 }
 
 void loop() {
