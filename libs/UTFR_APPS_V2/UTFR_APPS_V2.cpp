@@ -1,7 +1,8 @@
 #include "UTFR_APPS_V2.h"
 
 
-UTFR_APPS::UTFR_APPS(uint8_t dataOut, uint8_t clock)  : DAC(dataOut, clock)
+UTFR_APPS::UTFR_APPS(uint8_t dataOut, uint8_t clock)  : DAC(dataOut, clock), 
+                                                        megaSerial(10,13)
 {
 
 }
@@ -18,6 +19,7 @@ void UTFR_APPS::begin(int CS){
     pinMode(DAC_IN_PIN, INPUT);                 // APPS_Out_Analog
 
     DAC.begin(CS);
+    megaSerial.begin(9600);
 
     this->calibrateInputs();
 
@@ -83,10 +85,17 @@ void UTFR_APPS::calibrateInputs()
 
 void UTFR_APPS::processThrottlePosition()
 {   
+  if (_log_counter_ % 10)
+  {
+    this->logData();
+  }  
+
+  _log_counter_++;
+  
   if (_shutdown_active_)
   {
     DAC.analogWrite(0, 0);
-    return;
+    return;    
   }
 
   // read in the voltage values and convert to digital
@@ -112,7 +121,7 @@ void UTFR_APPS::processThrottlePosition()
     this->sendOutput();
     this->checkOutputConditions();
   }
-
+  delay(10);
 }
 
 bool UTFR_APPS::checkErrorCountdown()
@@ -188,8 +197,8 @@ bool UTFR_APPS::checkBrakeConditions()
   //E5.7
   if (_brake_normalized_ > _kBRAKE_ON_THRESHOLD_*_normalized_max_)
   {
-    Serial.print("1:");Serial.print(_thr_1_normalized_);
-    Serial.print(" 2:");Serial.println(_thr_2_normalized_);
+    //Serial.print("1:");Serial.print(_thr_1_normalized_);
+    //Serial.print(" 2:");Serial.println(_thr_2_normalized_);
     if (_thr_out_ > 0.25*_normalized_max_)
     {
       if (!_brake_plausibility_error_active_){
@@ -306,9 +315,32 @@ void UTFR_APPS::sendOutput()
   #ifdef debugMode
   //Serial.print("1:");Serial.print(_thr_1_normalized_);
   //Serial.print(" 2:");Serial.println(_thr_2_normalized_);
-  Serial.print("Throttle: "); Serial.print(_thr_out_); Serial.print(" | DAC: "); Serial.println(_dac_in_);
+  //Serial.print("Throttle: "); Serial.print(_thr_out_); Serial.print(" | DAC: "); Serial.println(_dac_in_);
   #endif
   DAC.analogWrite(_thr_out_, 0);
+}
+
+void UTFR_APPS::logData()
+{
+  if (_shutdown_active_)
+  {
+    megaSerial.println(static_cast<int32_t>(-2));
+    Serial.println(-2);
+    return;
+  }
+
+  if (_thr_plausibility_error_active_ ||
+      _thr_limit_error_active_ ||
+      _thr_output_error_active_ ||
+      _brake_limit_error_active_ ||  
+      _brake_plausibility_error_active_)
+  {
+    megaSerial.println(static_cast<int32_t>(-1));
+    Serial.println(-1);
+    return;
+  }
+  megaSerial.println(static_cast<int32_t>(_thr_out_));
+  Serial.println(static_cast<int32_t>(_thr_out_));
 }
 
 void UTFR_APPS::shutdown()

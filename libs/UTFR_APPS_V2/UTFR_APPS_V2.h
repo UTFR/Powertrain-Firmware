@@ -1,8 +1,9 @@
-#include "MCP_DAC.h"
-#include "lib_util.h"
-
 #ifndef _UTFR_APPS_H_
 #define _UTFR_APPS_H_
+
+#include "SoftwareSerial.h"
+#include "MCP_DAC.h"
+#include "lib_util.h"
 
 #define debugMode         // Uncomment this line to enable debug prints
 
@@ -11,6 +12,8 @@
 #define BRAKE_IN_PIN  A2
 #define DAC_IN_PIN    A5
 
+//#define MEGA_TX_PIN   10
+//#define MEGA_RX_PIN   13
 
 class UTFR_APPS {                      
 
@@ -40,7 +43,6 @@ class UTFR_APPS {
         const float _kTHR_MAX_DEVIATION_ = 0.1; //[percent]
         const float _kERROR_TIME_THRESHOLD_ = 100; //[ms]
         const float _kBRAKE_ON_THRESHOLD_ = 0.5;  //[percent]
-
         
         float _thr_1_high_lim_ = 0;
         float _thr_2_high_lim_ = 0;
@@ -75,6 +77,10 @@ class UTFR_APPS {
         unsigned long _thr_limit_error_time_ = 0;
         unsigned long _thr_output_error_time_ = 0;
 
+        uint8_t _log_counter_ = 0;
+
+        SoftwareSerial megaSerial;
+
         bool _shutdown_active_ = false;
 
         void calibrateInputs();
@@ -88,6 +94,8 @@ class UTFR_APPS {
         bool checkOutputConditions();
 
         void sendOutput();
+
+        void logData();
 };
 
 #endif
