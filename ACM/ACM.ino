@@ -2,7 +2,6 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
-
 #include "UTFR_HW_ACM.h"
 #include "UTFR_IO_THERMISTORS_ACM.h"
 #include "UTFR_IO_RELAYS_ACM.h"
@@ -36,7 +35,7 @@ UTFR_CAN_ACM CAN(HW_pins[HW_PIN_CAN1_CS].pinNum,       // TO DO: Which one's whi
                  HW_pins[HW_PIN_CAN2_CS].pinNum);      // Node 2 is on the powertrain CANbus? 
 
 //--------- RTD -----------------------
-const uint8_t RTD_reqConfirm = 10;
+const uint8_t RTD_reqConfirm = 20;
 uint8_t RTD_reqCount = 0;
 const uint16_t buzzerDelay = 1500;              // Milliseconds to turn RTD buzzer on for after precharge success
 unsigned long buzzerStart = 0;                  // Marks start time when buzzer turns on
@@ -62,9 +61,9 @@ uint8_t TS_errorCount = 0;                      // Counts up to TS_errorConfirm 
 /******************************************************************************
  *                     P R I V A T E   F U N C T I O N S                      *
  *****************************************************************************/
-void benchSelfTest(void);   // TO DO: Implement version for use with HV
-void shutdownCar(void);
+void benchSelfTest(void);
 bool doPrecharge(void);
+void shutdownCar(void);
 bool BMS_checkFaults(void);
 
 void CAN_msgWaitingISR(void);
@@ -73,13 +72,6 @@ void BMS_heartbeatISR(void);
 /******************************************************************************
  *                      P U B L I C   F U N C T I O N S                       *
  *****************************************************************************/
-void shutdownCar(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
-{
-  carState = CAR_STATE_SHUTDOWN;                // TO DO: make sure ACM needs to do nothing in this state
-  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);   
-  HW_digitalWrite(HW_PIN_SDC_EN, false);        // Rear Controller (Mega) will sense this and cut off power to all other LV electronics
-}
-
 void benchSelfTest(void) // only to be used on the bench with NO high voltage present. The self-test logic will be different in the car.
 {
   #ifdef debug_ACM
@@ -184,7 +176,7 @@ bool doPrecharge(void)
   {
     // FAILURE: system not detected to be energized
     #ifdef debug_ACM
-    Serial.println("PRECHARGE - system not detected to be energized");
+    Serial.println("PRECHARGE - system not energized");
     #endif
     
     shutdownCar();
@@ -194,7 +186,7 @@ bool doPrecharge(void)
   {
     // FAILURE: system not detected to be precharged
     #ifdef debug_ACM
-    Serial.println("PRECHARGE - system not detected to be precharged");
+    Serial.println("PRECHARGE - system not precharged");
     #endif
     
     shutdownCar();
@@ -216,15 +208,27 @@ bool doPrecharge(void)
   IO_setRelayState(IO_RELAY_AIRN, IO_RELAY_ENERGIZED);
   IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_SAFE);
   delay(100);
-  if (!((IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && (IO_getRelayState(IO_RELAY_PRECHARGE) == IO_RELAY_SAFE)))
+  if (!((IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && 
+        (IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && 
+        (IO_getRelayState(IO_RELAY_PRECHARGE) == IO_RELAY_SAFE)))
   {
     // FAILURE: incorrect relay states at end of precharge
+    #ifdef debug_ACM
+    Serial.println("Wrong relay states at end of precharge");
+    #endif
     shutdownCar();
     return false;
   }
 
   // Success
   return true;
+}
+
+void shutdownCar(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
+{
+  carState = CAR_STATE_SHUTDOWN;                // TO DO: make sure ACM needs to do nothing in this state
+  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, false);   
+  HW_digitalWrite(HW_PIN_SDC_EN, false);        // Rear Controller (Mega) will sense this and cut off power to all other LV electronics
 }
 
 bool BMS_checkFaults()          
@@ -354,7 +358,7 @@ void loop() {
         if(!BMS_checkFaults())
         {
           #ifdef debug_ACM
-          Serial.println("BMS fault code detected. Shutting down.");
+          Serial.println("BMS fault. Shutting down.");
           #endif
 
           shutdownCar();
@@ -407,7 +411,7 @@ void loop() {
         if(!BMS_checkFaults())
         {
           #ifdef debug_ACM
-          Serial.println("BMS fault code detected. Shutting down.");
+          Serial.println("BMS fault. Shutting down.");
           #endif
 
           shutdownCar();
