@@ -12,7 +12,7 @@
 #ifndef _UTFR_LVBATT_MEGA_H_
 #define _UTFR_LVBATT_MEGA_H_
 
-//#define debug_LVBatt           // Uncomment this line for debug prints
+#define debug_LVBatt           // Uncomment this line for debug prints
 
 
 class UTFR_LVBATT_MEGA

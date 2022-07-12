@@ -45,6 +45,10 @@ void toggleAPPS_ISR()                   // Enables or disables APPS output based
 {
   if (carState == CAR_STATE_INIT)
   {
+    #ifdef debug_RC_Micro
+    Serial.println("Micro transition to DRIVE state.");
+    #endif
+    
     carState = CAR_STATE_DRIVE;
   }
   if (carState == CAR_STATE_DRIVE)
@@ -56,11 +60,14 @@ void toggleAPPS_ISR()                   // Enables or disables APPS output based
 /******************************************************************************
  *                    P R O G R A M   E X E C U T I O N                       *
  *****************************************************************************/
-void setup() {
+void setup() 
+{
 
   Serial.begin(9600);
   while(!Serial){}                          // Wait for serial port to initialize
-
+  #ifdef debug_RC_Micro
+  Serial.println("============ Starting Micro. ==================");
+  #endif
 //------- Pin Setup -------------------
   HW_setupPins();
   
@@ -79,17 +86,18 @@ void loop() {
 
   switch(carState)
   {
-
 //===========================================================================  
     case CAR_STATE_INIT:
 //===========================================================================  
 // ------------ APPS outputs disabled, waiting for Mega input --------------- 
       RTD.confirmReady();               // Constantly checks brake and throttle inputs and updates a pin indicating this to the Mega 
-
+      break;
 //===========================================================================  
     case CAR_STATE_DRIVE:
 //===========================================================================  
 // ------------ APPS outputs enabled ----------------------------------------
-      APPS.processThrottlePosition();   // Note: library alerts Mega of APPS implausibility errors, don't have to do that here   
+      APPS.processThrottlePosition();   // Note: library alerts Mega of APPS implausibility errors, don't have to do that here
+      delay(50); 
+      break;  
   }
 }

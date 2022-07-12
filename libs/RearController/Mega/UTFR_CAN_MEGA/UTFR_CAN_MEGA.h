@@ -59,14 +59,30 @@
 #define INV_RUN_MODE_DISCHARGE_STATE_F  5
 
 
+// APPS Message
+#define APPS_F      1
+
+
+// Motor Temps Message
+#define MOTOR_TEMP_IN_F    1
+#define MOTOR_TEMP_OUT_F   2
+
+
+// Inverter Temps Message
+#define INV_TEMP_IN_F     1
+#define INV_TEMP_OUT_F    2
+
 
 enum CAN_msgNames_E                          // Define all CAN message names here so you can access them by name later                                    
 {                                          
     CAN_MSG_ER0,
     CAN_MSG_ER1,
-    CAN_MSG_INV_TEMPS_1,
-    CAN_MSG_INV_TEMPS_3,
+    CAN_MSG_INV_TEMPS_1,                     // Internal inverter sensors   
+    CAN_MSG_INV_TEMPS_3,                     // Internal inverter sensors
     CAN_MSG_INV_INTERNAL_STATE,
+    CAN_MSG_APPS,
+    CAN_MSG_MOTOR_TEMPS,
+    CAN_MSG_INV_TEMPS,                       // Cooling loop sensor
     
     CAN_MSG_COUNT
 };
@@ -202,14 +218,53 @@ class UTFR_CAN_MEGA
                 .isRx = true,
                 .isDirty = false,
             },
+            [CAN_MSG_APPS] =
+            {
+                .msgID = 0x01B4,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {APPS_F,    APPS_F, 
+                              APPS_F,    APPS_F,
+                              UNUSED_F,  UNUSED_F,
+                              UNUSED_F,  UNUSED_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
+            [CAN_MSG_MOTOR_TEMPS] =
+            {
+                .msgID = 0x01B5,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {MOTOR_TEMP_IN_F,  MOTOR_TEMP_IN_F, 
+                              MOTOR_TEMP_IN_F,  MOTOR_TEMP_IN_F,
+                              MOTOR_TEMP_OUT_F, MOTOR_TEMP_OUT_F,
+                              MOTOR_TEMP_OUT_F, MOTOR_TEMP_OUT_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            },
+            [CAN_MSG_INV_TEMPS] =
+            {
+                .msgID = 0x01B6,
+                .msgData = {0xFF, 0xFF, 0xFF, 0xFF, 
+                            0xFF, 0xFF, 0xFF, 0xFF},
+                .msgFields = {INV_TEMP_IN_F,  INV_TEMP_IN_F, 
+                              INV_TEMP_IN_F,  INV_TEMP_IN_F,
+                              INV_TEMP_OUT_F, INV_TEMP_OUT_F,
+                              INV_TEMP_OUT_F, INV_TEMP_OUT_F},
+                .isTx = true,
+                .isRx = false,
+                .isDirty = false,
+            }
         };
 
 
         unsigned long _CAN_filterArray[CAN_MASK_FILTER_COUNT] =         // Define the filters you want to apply to incoming messages here
         {
             // TO DO: Configured to accept only critical inverter messages, add more for inverter datalogging
-            [CAN_MASK_0] = 0b11111110000,             // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
-            [CAN_MASK_1] = 0b11111110000,             // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
+            [CAN_MASK_0] = 0b00000000000,             // Applies to CAN_FILTER_0 and 1  (Receive buffer 0, RXB0)
+            [CAN_MASK_1] = 0b00000000000,             // Applies to CAN_FILTER_2 to 5   (Recieve buffer 1, RXB1)
 
             [CAN_FILTER_0] = 0x0A0,
             [CAN_FILTER_1] = 0x0A0,

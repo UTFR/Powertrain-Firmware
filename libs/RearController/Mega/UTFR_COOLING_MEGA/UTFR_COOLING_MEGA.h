@@ -26,7 +26,7 @@ class UTFR_COOLING_MEGA
     bool checkCoolingLoop(UTFR_CAN_MEGA& CAN);          // Checks if cooling loop parameters are within safe bounds
 
   private:
-    
+                                                                               
     /******************************************************************************
     *              P R I V A T E   D A T A   D E F I N I T I O N S               *
     *****************************************************************************/
@@ -50,12 +50,12 @@ class UTFR_COOLING_MEGA
     const int kLOW_TEMP_RAW = 102;
     const int kHIGH_TEMP_RAW = 921;
 
-    const int kMOTOR_TEMP_FAN_ON_THRESHOLD = 50;    //This is controlled by external fan controller (hopefully)
-    const int kMOTOR_TEMP_FAN_OFF_THRESHOLD = 20;
+    const int kMOTOR_TEMP_FAN_ON_THRESHOLD = 45;    //This is controlled by external fan controller (hopefully)
+    const int kMOTOR_TEMP_FAN_OFF_THRESHOLD = 35;
     const int kMOTOR_TEMP_DANGER_THRESHOLD = 80;
 
-    const int kINV_TEMP_FAN_ON_THRESHOLD = 50;
-    const int kINV_TEMP_FAN_OFF_THRESHOLD = 20;
+    const int kINV_TEMP_FAN_ON_THRESHOLD = 45;
+    const int kINV_TEMP_FAN_OFF_THRESHOLD = 35;
     const int kINV_TEMP_DANGER_THRESHOLD = 80;
 
     const uint8_t kOVERTEMP_THRESHOLD = 5;    //How many loops before false is sent
@@ -67,7 +67,7 @@ class UTFR_COOLING_MEGA
 
     const float kLOW_FLOW_RAW = 2;
     const float kHIGH_FLOW_RAW = 1023;
-
+ 
     const float kFLOW_DANGER_THRESHOLD = 10;
 
     const uint8_t kLOWFLOW_THRESHOLD = 5;  //How many loops before false is sent

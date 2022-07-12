@@ -53,6 +53,7 @@ bool UTFR_LVBATT_MEGA::checkLVBatt(UTFR_CAN_MEGA& CAN)
     {    
         #ifdef debug_LVBatt
         Serial.println("BMS UNDERVOLTAGE ERROR");
+        Serial.println(_readVoltage);
         #endif
         
         CAN.sendError(ERR_BMS_UNDERVOLT);
@@ -63,6 +64,7 @@ bool UTFR_LVBATT_MEGA::checkLVBatt(UTFR_CAN_MEGA& CAN)
     {
         #ifdef debug_LVBatt
         Serial.println("BMS OVERTEMP ERROR");
+        Serial.println(_readTemp);
         #endif
 
         CAN.sendError(ERR_BMS_OVERTEMP);
