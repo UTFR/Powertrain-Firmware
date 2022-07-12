@@ -2,212 +2,81 @@
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
+#include "UTFR_HW_ACM.h"
+#include "UTFR_IO_THERMISTORS_ACM.h"
+#include "UTFR_IO_RELAYS_ACM.h"
+#include "UTFR_CAN_ACM.h"
 
-#include "HW_ACM.h"
-
-#include "IO_thermistors.h"
-#include "IO_relays.h"
+#include <TimerOne.h>
 
 /******************************************************************************
  *                               D E F I N E S                                *
  *****************************************************************************/
+#define debug_ACM             // Uncomment for debug prints
 
-#define ANALOG_CONSTANT 1023 // Arduino ADC resolution
-#define S0_MASK 0b00001
-#define S1_MASK 0b00010
-#define S2_MASK 0b00100
-#define S3_MASK 0b01000
-#define MEASURED_ANALOG_ERROR 0.1
+#define PRECHARGE_DURATION 3500
+#define DIGITAL_LOGIC_THRESHOLD 2.5
 
 /******************************************************************************
- *                              T Y P E D E F S                               *
+ *                      D A T A   D E F I N I T I O N S                       *
  *****************************************************************************/
+//--------- State Machine -------------
+enum carState_E
+{                                       
+  CAR_STATE_INIT = 0,
+  CAR_STATE_PRECHARGE,
+  CAR_STATE_DRIVE,
+  CAR_STATE_SHUTDOWN,
+};
+carState_E carState = CAR_STATE_INIT;
 
+//------- Class Instantiation ---------
+UTFR_CAN_ACM CAN(HW_pins[HW_PIN_CAN1_CS].pinNum,       // TO DO: Which one's which? Node 1 is on the BMS CANbus?
+                 HW_pins[HW_PIN_CAN2_CS].pinNum);      // Node 2 is on the powertrain CANbus? 
 
-/******************************************************************************
- *         P R I V A T E   F U N C T I O N   D E C L A R A T I O N S          *
- *****************************************************************************/
+//--------- RTD -----------------------
+const uint8_t RTD_reqConfirm = 20;
+uint8_t RTD_reqCount = 0;
+const uint16_t buzzerDelay = 1500;              // Milliseconds to turn RTD buzzer on for after precharge success
+unsigned long buzzerStart = 0;                  // Marks start time when buzzer turns on
 
+//--------- Thermals ------------------
+const int boardTempPollEvery = 2000;            // Check PCB temps every 'boardTempPollEvery' milliseconds
+unsigned long boardTempPollLast = 0;            // Marks last time board temps were polled
 
-/******************************************************************************
- *              P R I V A T E   D A T A   D E F I N I T I O N S               *
- *****************************************************************************/
+const uint8_t boardOvertempConfirm = 3;       
+uint8_t boardOvertempCount = 0;                 // Counts up to 'boardOvertempConfirm' then shuts down car
 
+//--------- CAN -----------------------
+volatile bool msgWaiting = false;               // Flipped true in interrupt routine when CAN message waiting in Rx buffer
+
+//--------- BMS -----------------------
+const uint16_t BMS_heartbeatEvery = 200000;     // Microseconds between sending heartbeat msg to BMS
+                                                // TS != nTS also checked in this ISR (only have TimerOne on Nano)
+
+//--------- Tractive System -----------
+const uint8_t TS_errorConfirm = 3;              
+uint8_t TS_errorCount = 0;                      // Counts up to TS_errorConfirm (each TS==nTS) then shuts down car
 
 /******************************************************************************
  *                     P R I V A T E   F U N C T I O N S                      *
  *****************************************************************************/
+void benchSelfTest(void);
+bool doPrecharge(void);
+void shutdownCar(void);
+bool BMS_checkFaults(void);
 
-static void app_failedPrecharge(void);
-static bool app_doPrecharge(void);
+void CAN_msgWaitingISR(void);
+void BMS_heartbeatISR(void);
 
 /******************************************************************************
  *                      P U B L I C   F U N C T I O N S                       *
  *****************************************************************************/
-
-void HW_setupPins(void)
+void benchSelfTest(void) // only to be used on the bench with NO high voltage present. The self-test logic will be different in the car.
 {
-  for (int pin = 0; pin < HW_PIN_COUNT; ++pin)
-  {
-    if (HW_pins[pin].isOutput)
-    {
-      pinMode(HW_pins[pin].pinNum, OUTPUT);
-    }
-    else
-    {
-      pinMode(HW_pins[pin].pinNum, INPUT);
-    }
-  }
-}
-
-void HW_digitalWrite(HW_pin_E pin, bool physState)
-{
-  if (pin < HW_PIN_COUNT)
-  {
-    digitalWrite(HW_pins[pin].pinNum, physState);
-    HW_pins[pin].physicalState = physState;
-  }
-}
-
-bool HW_digitalRead(HW_pin_E pin)
-{
-  bool state = false;
-  if (pin < HW_PIN_COUNT)
-  {
-    state = digitalRead(HW_pins[pin].pinNum);
-    HW_pins[pin].physicalState = state;
-  }
-  
-  return state;
-}
-
-float HW_readMux(HW_MUX_E muxPin) // Returns the voltage read for a given mux pin, from 0-5V
-{
-  bool S0_state = (muxPin & S0_MASK);
-  bool S1_state = (muxPin & S1_MASK) >> 1;
-  bool S2_state = (muxPin & S2_MASK) >> 2;
-  bool S3_state = (muxPin & S3_MASK) >> 3;
-
-  // Set the mux select pins
-  HW_digitalWrite(HW_PIN_MUX_S0, S0_state);
-  HW_digitalWrite(HW_PIN_MUX_S1, S1_state);
-  HW_digitalWrite(HW_PIN_MUX_S2, S2_state);
-  HW_digitalWrite(HW_PIN_MUX_S3, S3_state);
-
-  float readVal = analogRead(HW_pins[HW_PIN_MUX].pinNum);
-  float analogVoltage = (readVal / ANALOG_CONSTANT) * 5.0;
-  analogVoltage += MEASURED_ANALOG_ERROR;
-  return analogVoltage;
-}
-
-IO_relayState_E IO_getRelayState(IO_relay_E relay)
-{
-  IO_relayState_E ret;
-  bool intendedState; // 0 represents not conducting, 1 represents relay conducting
-  bool measuredState; // 0 represents not conducting, 1 represents relay conducting
-  switch(relay)
-  {
-    case IO_RELAY_AIRP:
-      intendedState = HW_pins[HW_PIN_EN_AIRP].physicalState;
-      measuredState = (HW_readMux(HW_MUX_AIRP_CONDUCTING) < 0.5); // Signal is active low
-      break;      
-    case IO_RELAY_AIRN:
-      intendedState = HW_pins[HW_PIN_EN_AIRN].physicalState;
-      measuredState = (HW_readMux(HW_MUX_AIRN_CONDUCTING) < 0.5); // Signal is active low
-      break;
-    case IO_RELAY_PRECHARGE:
-      intendedState = HW_pins[HW_PIN_EN_PRECHARGE].physicalState;
-      measuredState = (HW_readMux(HW_MUX_PRECHARGE_CONDUCTING) < 0.5); // Signal is active low
-      break;
-    case IO_RELAY_COUNT:
-    default: // Set condition to trigger error
-      intendedState = false;
-      measuredState = true;
-      break;
-  }
-
-  if ((intendedState == false) && (measuredState == false))
-  {
-    ret = IO_RELAY_SAFE;
-  }
-  else if ((intendedState == true) && (measuredState == true))
-  {
-    ret = IO_RELAY_ENERGIZED;
-  }
-  else
-  {
-    ret = IO_RELAY_FAULT;
-  }
-
-  return ret;
-}
-
-void IO_setRelayState(IO_relay_E relay, IO_relayState_E state)
-{
-  if ((relay < IO_RELAY_COUNT) && (state < IO_RELAY_FAULT))
-  {
-    if (relay == IO_RELAY_AIRP)
-    {
-      HW_digitalWrite(HW_PIN_EN_AIRP, state);
-    }
-    else if (relay == IO_RELAY_AIRN)
-    {
-      HW_digitalWrite(HW_PIN_EN_AIRN, state);
-    }
-    else if (relay == IO_RELAY_PRECHARGE)
-    {
-      HW_digitalWrite(HW_PIN_EN_PRECHARGE, state);
-    }
-
-    if (state == IO_RELAY_ENERGIZED)
-    {
-      delay(100); // To prevent large inrush currents
-    }
-  }
-}
-
-void printRelayState(IO_relay_E relay, IO_relayState_E state)
-{
-  String relayName;
-  String relayState;
-
-  if (relay == IO_RELAY_AIRP)
-  {
-    relayName = "AIRP";
-  }
-  else if (relay == IO_RELAY_AIRN)
-  {
-    relayName = "AIRN";
-  }
-  else
-  {
-    relayName = "PREC";
-  }
-
-  if (state == IO_RELAY_SAFE)
-  {
-    relayState = "SAFE";
-  }
-  else if (state == IO_RELAY_ENERGIZED)
-  {
-    relayState = "ENERGIZED";
-  }
-  else
-  {
-    relayState = "FAULT";
-  }
-
-  Serial.print(relayName);
-  Serial.print(" STATE: ");
-  Serial.println(relayState);
-}
-
-void app_benchSelfTest(void) // only to be used on the bench with NO high voltage present. The self-test logic will be different in the car.
-{
+  #ifdef debug_ACM
   Serial.println("======== BEGINNING SELF TEST ========");
-  // Enable SDC
-  HW_digitalWrite(HW_PIN_SDC_EN, true);
-  Serial.println("Shutdown circuit enabled");
+  #endif
 
   // Check for relay faults
   IO_setRelayState(IO_RELAY_AIRP, IO_RELAY_SAFE);
@@ -221,109 +90,199 @@ void app_benchSelfTest(void) // only to be used on the bench with NO high voltag
 
   if (airpState == IO_RELAY_SAFE)
   {
-    IO_setRelayState(IO_RELAY_AIRP, IO_RELAY_ENERGIZED);
+    #ifdef debug_ACM
+    Serial.println("AIRp safe.");
+    #endif
   }
 
   if (airnState == IO_RELAY_SAFE)
   {
-    IO_setRelayState(IO_RELAY_AIRN, IO_RELAY_ENERGIZED);
+    #ifdef debug_ACM
+    Serial.println("AIRn safe.");
+    #endif
   }
 
   if (prechargeState == IO_RELAY_SAFE)
   {
-    IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_ENERGIZED);
+    #ifdef debug_ACM
+    Serial.println("Precharge relay safe.");
+    #endif
   }
-
-  // Get new states
-  airpState = IO_getRelayState(IO_RELAY_AIRP);
-  airnState = IO_getRelayState(IO_RELAY_AIRN);
-  prechargeState = IO_getRelayState(IO_RELAY_PRECHARGE);
 
   // Respond to error states
   if (airpState == IO_RELAY_FAULT)
   {
+    #ifdef debug_ACM
+    Serial.println("AIRp fault!");
+    #endif
     IO_setRelayState(IO_RELAY_AIRP, IO_RELAY_SAFE);
   }
   
   if (airnState == IO_RELAY_FAULT)
   {
+    #ifdef debug_ACM
+    Serial.println("AIRn fault!");
+    #endif
     IO_setRelayState(IO_RELAY_AIRN, IO_RELAY_SAFE);
   }
 
   if (prechargeState == IO_RELAY_FAULT)
   {
+    #ifdef debug_ACM
+    Serial.println("Precharge relay fault!");
+    #endif
     IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_SAFE);
   }
-  
+
+  #ifdef debug_ACM
   Serial.println("=========== RELAY STATES ===========");
   printRelayState(IO_RELAY_AIRP, airpState);
   printRelayState(IO_RELAY_AIRN, airnState);
   printRelayState(IO_RELAY_PRECHARGE, prechargeState);
-
-  if ((airpState == IO_RELAY_FAULT) | (airnState == IO_RELAY_FAULT) | (prechargeState == IO_RELAY_FAULT))
-  {
-    HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true); // If any relay faults present, illuminate LED
-  }
-  
+  #endif
 }
 
-void app_failedPrecharge(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
+bool doPrecharge(void)
 {
-  HW_digitalWrite(HW_PIN_SDC_EN, false);
-  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, true);
-}
-
-bool app_doPrecharge(void)
-{
-  
-  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) < 2.5) || (HW_readMux(HW_MUX_PRECHARGE_DONE) > 2.5) || (IO_getRelayState(IO_RELAY_PRECHARGE) != IO_RELAY_SAFE))
+  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) < DIGITAL_LOGIC_THRESHOLD) || 
+      (HW_readMux(HW_MUX_PRECHARGE_DONE) > DIGITAL_LOGIC_THRESHOLD) || 
+      (IO_getRelayState(IO_RELAY_PRECHARGE) != IO_RELAY_SAFE) ||
+      (IO_getRelayState(IO_RELAY_AIRP) != IO_RELAY_SAFE) ||
+      (IO_getRelayState(IO_RELAY_AIRN) != IO_RELAY_SAFE))
   {
     // FAILURE: off-state signals are incorrect
-    app_failedPrecharge();
+    #ifdef debug_ACM
+    Serial.println("PRECHARGE: Off state signals are incorrect.");
+    Serial.println(HW_readMux(HW_MUX_nTS_ENERGIZED));
+    Serial.println(HW_readMux(HW_MUX_TS_ENERGIZED));
+    #endif
+    
+    shutdownCar();
     return false;
   }
   
   int startTime = millis();
   IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_ENERGIZED);
-  while ((millis() - startTime) < 3500) // Precharge takes about 3.5 seconds, tested in lab. Time can be reduced by placing another resistor in parallel.
-  {
-    // Do nothing. Wait for precharge to complete
+  while ((millis() - startTime) < PRECHARGE_DURATION) // Precharge takes about 3.5 seconds, tested in lab. 
+  {                                     // Time can be reduced by placing another resistor in parallel.
+    if(msgWaiting)                      // Wait for precharge to complete. Do nothing other than receive BMS messages. 
+    {                                   
+      CAN.receiveMsgs(1);               // TO DO: Update to correct node number (BMS node)
+    }                                   
   }
 
   // Check precharge signals
-  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) > 2.5))
+  if ((HW_readMux(HW_MUX_nTS_ENERGIZED) > DIGITAL_LOGIC_THRESHOLD))
   {
     // FAILURE: system not detected to be energized
-    app_failedPrecharge();
+    #ifdef debug_ACM
+    Serial.println("PRECHARGE - system not energized");
+    #endif
+    
+    shutdownCar();
     return false;
   }
-  if ((HW_readMux(HW_MUX_PRECHARGE_DONE) < 2.5))
+  if ((HW_readMux(HW_MUX_PRECHARGE_DONE) < DIGITAL_LOGIC_THRESHOLD))
   {
     // FAILURE: system not detected to be precharged
-    app_failedPrecharge();
+    #ifdef debug_ACM
+    Serial.println("PRECHARGE - system not precharged");
+    #endif
+    
+    shutdownCar();
     return false;
   }
-  if ((HW_readMux(HW_MUX_PRECHARGE_CONDUCTING) > 2.5))
+  if ((HW_readMux(HW_MUX_PRECHARGE_CONDUCTING) > DIGITAL_LOGIC_THRESHOLD))
   {
     // FAILURE: precharge relay detected to be not conducting
-    app_failedPrecharge();
+    #ifdef debug_ACM
+    Serial.println("PRECHARGE - precharge relay not conducting");
+    #endif
+    
+    shutdownCar();
     return false;
   }
 
   // All good up until this point. Precharge is complete, activate main contactor
   IO_setRelayState(IO_RELAY_AIRP, IO_RELAY_ENERGIZED);
+  IO_setRelayState(IO_RELAY_AIRN, IO_RELAY_ENERGIZED);
   IO_setRelayState(IO_RELAY_PRECHARGE, IO_RELAY_SAFE);
   delay(100);
-  if (!((IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && (IO_getRelayState(IO_RELAY_PRECHARGE) == IO_RELAY_SAFE)))
+  if (!((IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && 
+        (IO_getRelayState(IO_RELAY_AIRP) == IO_RELAY_ENERGIZED) && 
+        (IO_getRelayState(IO_RELAY_PRECHARGE) == IO_RELAY_SAFE)))
   {
     // FAILURE: incorrect relay states at end of precharge
-    app_failedPrecharge();
+    #ifdef debug_ACM
+    Serial.println("Wrong relay states at end of precharge");
+    #endif
+    shutdownCar();
     return false;
   }
 
   // Success
   return true;
+}
+
+void shutdownCar(void) // This function disables the shutdown circuit and illuminates the AMS fault LED
+{
+  carState = CAR_STATE_SHUTDOWN;                // TO DO: make sure ACM needs to do nothing in this state
+  HW_digitalWrite(HW_PIN_AMS_FAULT_EN, false);   
+  HW_digitalWrite(HW_PIN_SDC_EN, false);        // Rear Controller (Mega) will sense this and cut off power to all other LV electronics
+}
+
+bool BMS_checkFaults()          
+{
+  uint8_t DTC_1 = CAN.getField(CAN_MSG_BMS_FAULTS, BMS_DTC_1_F);
+  uint16_t DTC_2 = CAN.getField(CAN_MSG_BMS_FAULTS, BMS_DTC_2_F);
+  
+  if((DTC_1 > 0) || (DTC_2 > 0))      // TO DO: Will likely need modification (care about less faults)
+  {                                   // Use lib_util GET_BITS() to extract specific fault codes we care about
+    #ifdef debug_ACM
+    Serial.print("DTC Status 1: "); Serial.println(DTC_1);
+    Serial.print("DTC Status 2: "); Serial.println(DTC_2);
+    #endif
     
+    return false;
+  }
+
+  return true; 
+}
+
+/******************************************************************************
+ *                         I S R   D E F I N I T I O N S                      *
+ *****************************************************************************/
+
+void CAN_msgWaitingISR()                  // Should only need to receive off the BMS bus 
+{
+  msgWaiting = true;                      // Rear controller bus only for sending logging data
+}
+
+void BMS_heartbeatISR()
+{
+  CAN.sendMsg(CAN_MSG_BMS_HEARTBEAT, 1);              // TO DO: Update to correct node number (BMS node)
+  
+  if((HW_readMux(HW_MUX_TS_ENERGIZED) < DIGITAL_LOGIC_THRESHOLD) ==       // Check TS pins while we're here
+     (HW_readMux(HW_MUX_nTS_ENERGIZED) < DIGITAL_LOGIC_THRESHOLD))        // These two should always be inverse of each other
+  { 
+
+    TS_errorCount += 1;
+
+    if (TS_errorCount >= TS_errorConfirm)
+    {
+      #ifdef debug_ACM
+      Serial.print("nTS ="); Serial.println(HW_readMux(HW_MUX_nTS_ENERGIZED));
+      Serial.print("TS = "); Serial.println(HW_readMux(HW_MUX_TS_ENERGIZED));
+      Serial.println("TS == nTS. Shutting down.");
+      #endif
+      
+      shutdownCar();
+    }
+  }  
+  else
+  {
+    TS_errorCount = 0;
+  }
 }
 
 /******************************************************************************
@@ -331,16 +290,171 @@ bool app_doPrecharge(void)
  *****************************************************************************/
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("ACM booting up");
-  HW_setupPins();
-  HW_digitalWrite(HW_PIN_SDC_EN, true);
-  //app_benchSelfTest();
   
+  Serial.begin(9600);
+  while(!Serial){}                        // Wait for serial port to initialize
+
+  #ifdef debug_ACM
+  Serial.println("ACM booting up");
+  #endif
+
+//------- Pin Setup ------------------
+  HW_setupPins();
+
+//------- Relay Self Test ------------  
+  benchSelfTest();
+
+//------- Setup CAN ------------------
+  CAN.begin(CAN_500KBPS, 3);              // TO DO: Is this the right rate?
+  CAN.setFilters(1);                      // TO DO: Update to correct node number (should be BMS node)
+  CAN.setFilters_permitNone(2);           // TO DO: Update to correct node number (should be RC/Powertrain node)
+
+//------- Setup Interrupts -----------
+  Timer1.initialize(BMS_heartbeatEvery);
+  Timer1.attachInterrupt(BMS_heartbeatISR);
+
+  attachInterrupt(digitalPinToInterrupt(HW_pins[HW_PIN_CAN1_INT].pinNum),     // TO DO: Update to correct pin (should be BMS node)
+                  CAN_msgWaitingISR, LOW);
 }
 
 void loop() {
 
+  switch(carState)
+  {
+    
+//===========================================================================  
+    case CAR_STATE_INIT:
+//===========================================================================  
+//-------- Waiting for RTD_REQUEST to go high -------------------------------
+      #ifdef debug_ACM
+      Serial.println("Waiting for RTD req.");
+      Serial.print("RTD_REQ reading: ");  Serial.println(HW_readMux(HW_MUX_RTD_REQUEST));
+      #endif
+      
+      if(HW_readMux(HW_MUX_RTD_REQUEST) > DIGITAL_LOGIC_THRESHOLD)
+      {
+        RTD_reqCount += 1;
 
+        if(RTD_reqCount >= RTD_reqConfirm)
+        {
+          #ifdef debug_ACM
+          Serial.println("Attempting precharge.");
+          #endif
+          carState = CAR_STATE_PRECHARGE;
+        }
+      }
+      else
+      {
+        RTD_reqCount = 0;
+      }
 
+      if(msgWaiting)                              // Receive incoming CAN messages
+      {
+        CAN.receiveMsgs(1);                       // TO DO: Update to correct node number (BMS node)
+      }
+
+      if(CAN.msgDirty(CAN_MSG_BMS_FAULTS))        // Check for BMS fault codes
+      {
+        if(!BMS_checkFaults())
+        {
+          #ifdef debug_ACM
+          Serial.println("BMS fault. Shutting down.");
+          #endif
+
+          shutdownCar();
+        }
+      }
+      
+      break;
+      
+//=========================================================================== 
+    case CAR_STATE_PRECHARGE:
+//===========================================================================
+//-------- Attempt pre-charge sequence --------------------------------------
+      if(doPrecharge())
+      {
+        #ifdef debug_ACM
+        Serial.println("Pre-charge success!");
+        #endif
+
+        HW_digitalWrite(HW_PIN_RTD_CONFIRM, true);    // Let rear controller know pre-charge succeeded
+        delay(100);                                   // Allow inverter to transition to RUNNING state
+        HW_digitalWrite(HW_PIN_RTD_BUZZER_EN, true);  // Let driver know pedals will respond now
+        buzzerStart = millis();
+        while((millis() - buzzerStart) < buzzerDelay)
+        {
+          if(msgWaiting)
+          {
+            CAN.receiveMsgs(1);               // TO DO: Update to correct node number (BMS node)
+          }
+        }
+        HW_digitalWrite(HW_PIN_RTD_BUZZER_EN, false);
+        
+        carState = CAR_STATE_DRIVE;
+      }
+      else
+      {
+        #ifdef debug_ACM
+        Serial.println("Pre-charge FAILED.");
+        #endif
+        
+        shutdownCar();
+      }
+
+      break;
+
+//=========================================================================== 
+    case CAR_STATE_DRIVE:
+//===========================================================================
+      if(CAN.msgDirty(CAN_MSG_BMS_FAULTS))        // Check for BMS fault codes
+      {
+        if(!BMS_checkFaults())
+        {
+          #ifdef debug_ACM
+          Serial.println("BMS fault. Shutting down.");
+          #endif
+
+          shutdownCar();
+        }
+      }
+      
+      if((millis() - boardTempPollLast) > boardTempPollEvery)  
+      {
+        if(!checkBoardTemps(CAN))                 // Check PCB temps
+        {
+          if(boardOvertempCount > boardOvertempConfirm)
+          {
+            #ifdef debug_ACM                      // TO DO: Store temps in CAN library
+            Serial.println("PCB Temp too high. Shutting down.");
+            #endif
+            shutdownCar();
+          }
+          boardOvertempCount += 1;
+        }
+        else
+        {
+          boardOvertempCount = 0;
+        }
+        boardTempPollLast = millis();             // Reset timer
+      }
+      
+      if(msgWaiting)
+      {
+        CAN.receiveMsgs(1);                       // TO DO: Update to correct node number (BMS node)
+      }
+
+      break;
+
+//=========================================================================== 
+    case CAR_STATE_SHUTDOWN:
+//===========================================================================
+      #ifdef debug_ACM
+      Serial.println("ACM in shutdown state.");
+      #endif
+      shutdownCar();
+      delay(1000);
+
+      break;
+
+  }
 }
